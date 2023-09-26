@@ -15,11 +15,12 @@ class HomeView(TemplateView):
         login_user = User.objects.get(pk=1)  # TODO: request.user.id
         context["chatlogs"] = ChatGpt.objects.filter(user=login_user).order_by('thread', 'created_at')
 
-        file_path = str(BASE_DIR / r'chat\tests\domain\valueobject\doj_cloud_act_white_paper_2019_04_10.pdf')
-        dataloader = PdfDataloader(file_path, ['\n\n \n'])
+        file_path = str(BASE_DIR / r'chat\tests\domain\valueobject\令和4年版少子化社会対策白書全体版（PDF版）.pdf')
+        dataloader = PdfDataloader(file_path)
         chat_history = []
         gpt_pdf_service = GptPdfService(dataloader)
-        result = gpt_pdf_service.get_answer('What is US Cloud Act? Answer within 50 words in Japanese.', chat_history)
+        result = gpt_pdf_service.gpt_answer('晩婚化について教えて', chat_history)
         context["answer"] = result["answer"]
+        context["sources"] = result["sources"]
 
         return context
