@@ -14,7 +14,8 @@
             {% for chatlog in chatlogs %}
                 <li>{{ chatlog.thread }} {{ chatlog.role }} {{ chatlog.message }}</li>
             {% endfor %}
-            {{ answer }}
         </ul>
+        <p class="mt-5">{{ answer }}</p>
+        <p class="mt-5">{{ sources }}</p>
     </div>
 {% endblock %}
