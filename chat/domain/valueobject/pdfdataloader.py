@@ -1,36 +1,32 @@
-from langchain.text_splitter import RecursiveCharacterTextSplitter
+import os
+from typing import List
+
 from langchain.document_loaders import PDFMinerLoader
+from langchain.schema import Document
 
 from chat.domain.valueobject.dataloader import Dataloader
 
 
 class PdfDataloader(Dataloader):
     @property
-    def data(self):
-        return self._data_by_page
+    def data(self) -> List[Document]:
+        return self._docs
 
-    def __init__(self, file_path: str, separators: list, chunk_size: int = 600, chunk_overlap: int = 100):
+    def __init__(self, file_path: str):
+        super().__init__()
         self._file_path = file_path
-        self._separators = separators
-        self._chunk_size = chunk_size
-        self._chunk_overlap = chunk_overlap
         self._load()
-        self._split(self._separators)
+        self._split()
 
     def _load(self):
         self.data_raw = PDFMinerLoader(self._file_path).load()
 
-    def _split(self, separators: list):
+    def _split(self):
         """
-        PDFをページ単位に切り刻み、出典（ページ数）をつけます
-        :param separators: ページを識別する正規表現 e.g. ['\n\n \n']
+        PDFを切り刻み、出典（ページ数）をつけます
         """
-        self._text_splitter = RecursiveCharacterTextSplitter(
-                separators=self._separators,
-                chunk_size=self._chunk_size,
-                chunk_overlap=self._chunk_overlap
-        )
-        self._data_by_page = self._text_splitter.split_documents(self.data_raw)
-        for i, a_page in enumerate(self._data_by_page):
-            a_page.metadata['type'] = 'pdf'
-            a_page.metadata['page'] = i + 1
+        self._docs = self.text_splitter.split_documents(self.data_raw)
+        filename = os.path.basename(self._file_path)
+        for i, doc in enumerate(self._docs):
+            doc.page_content = doc.page_content.replace("\n", " ")
+            doc.metadata = {"source": f'{filename} {i + 1}ページ'}
