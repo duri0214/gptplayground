@@ -1,7 +1,7 @@
 import os
 from typing import List
 
-from langchain.document_loaders import PDFMinerLoader
+from langchain.document_loaders import PyPDFLoader
 from langchain.schema import Document
 
 from chat.domain.valueobject.dataloader import Dataloader
@@ -19,7 +19,7 @@ class PdfDataloader(Dataloader):
         self._split()
 
     def _load(self):
-        self.data_raw = PDFMinerLoader(self._file_path).load()
+        self.data_raw = PyPDFLoader(self._file_path).load()
 
     def _split(self):
         """
