@@ -16,9 +16,8 @@ class HomeView(TemplateView):
         context["chatlogs"] = ChatGpt.objects.filter(user=login_user).order_by('thread', 'created_at')
 
         file_path = str(BASE_DIR / r'chat\tests\domain\valueobject\令和4年版少子化社会対策白書全体版（PDF版）.pdf')
-        dataloader = PdfDataloader(file_path)
         chat_history = []
-        gpt_pdf_service = GptPdfService(dataloader)
+        gpt_pdf_service = GptPdfService(PdfDataloader(file_path))
         result = gpt_pdf_service.gpt_answer('晩婚化について教えて', chat_history)
         context["answer"] = result["answer"]
         context["sources"] = result["sources"]
