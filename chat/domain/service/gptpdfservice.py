@@ -57,6 +57,7 @@ class GptPdfService:
         chain = RetrievalQAWithSourcesChain.from_chain_type(llm=llm,
                                                             chain_type="stuff",
                                                             reduce_k_below_max_tokens=True,
+                                                            return_source_documents=True,
                                                             retriever=docsearch.as_retriever(),
                                                             chain_type_kwargs={"prompt": self.prompt_template})
 

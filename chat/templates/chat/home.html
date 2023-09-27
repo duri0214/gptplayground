@@ -10,12 +10,16 @@
             <p>You can issue ChatGPT.</p>
         </div>
 
-        <ul>
-            {% for chatlog in chatlogs %}
-                <li>{{ chatlog.thread }} {{ chatlog.role }} {{ chatlog.message }}</li>
-            {% endfor %}
-        </ul>
-        <p class="mt-5">{{ answer }}</p>
-        <p class="mt-5">{{ sources }}</p>
+        {% for chatlog in chatlogs %}
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">{{ chatlog.role }}</h5>
+                    <h6 class="card-subtitle mb-2 text-muted">{{ chatlog.thread }}</h6>
+                    <p class="card-text">{{ chatlog.message }}</p>
+                    <a href="#" class="card-link">Card link</a>
+                    <a href="#" class="card-link">Another link</a>
+                </div>
+            </div>
+        {% endfor %}
     </div>
 {% endblock %}
