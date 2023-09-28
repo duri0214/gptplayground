@@ -21,5 +21,10 @@
                 </div>
             </div>
         {% endfor %}
+        <form action="{% url 'cht:home' %}" method="POST">
+            {{ form }}
+            {% csrf_token %}
+            <input type="submit" value="送信">
+        </form>
     </div>
 {% endblock %}

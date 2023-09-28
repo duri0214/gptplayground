@@ -1,30 +1,38 @@
 from django.contrib.auth.models import User
-from django.views.generic import TemplateView
+from django.urls import reverse_lazy
+from django.views.generic import FormView
 
 from chat.domain.service.gptpdfservice import GptPdfService
 from chat.domain.valueobject.pdfdataloader import PdfDataloader
+from chat.forms import UserTextForm
 from chat.models import ChatGpt
 from config.settings import BASE_DIR
 
 
-class HomeView(TemplateView):
+class HomeView(FormView):
     template_name = 'chat/home.html'
+    form_class = UserTextForm
+    success_url = reverse_lazy('cht:home')
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         login_user = User.objects.get(pk=1)  # TODO: request.user.id
-
-        file_path = str(BASE_DIR / r'chat\tests\domain\valueobject\令和4年版少子化社会対策白書全体版（PDF版）.pdf')
-        chat_history = []
-        gpt_pdf_service = GptPdfService(PdfDataloader(file_path))
-        result = gpt_pdf_service.gpt_answer('晩婚化について教えて', chat_history)
-
-        # TODO: metadataを集めることができた
-        source_documents = [doc.metadata for doc in result['source_documents']]
-        print(source_documents)
-
-        ChatGpt.objects.create(user=login_user, thread='XXX', role='user', message=result["question"])
-        ChatGpt.objects.create(user=login_user, thread='XXX', role='assistant', message=result["answer"])
         context["chatlogs"] = ChatGpt.objects.filter(user=login_user).order_by('thread', 'created_at')
 
         return context
+
+    def form_valid(self, form):
+        form_data = form.cleaned_data
+        login_user = User.objects.get(pk=1)  # TODO: request.user.id
+
+        file_path = str(BASE_DIR / r'chat\tests\domain\valueobject\令和4年版少子化社会対策白書全体版（PDF版）.pdf')
+        chat_history = []  # TODO: 過去ログを含めるかどうかは要判断
+        gpt_pdf_service = GptPdfService(PdfDataloader(file_path))
+        result = gpt_pdf_service.gpt_answer(form_data['question'], chat_history)
+        # TODO: うまく改行できてねーなー
+        source_documents = "<br>".join([doc.metadata['source'] for doc in result['source_documents']])
+        formatted_answer = f'{result["answer"]}<br><br>{source_documents}'
+        ChatGpt.objects.create(user=login_user, thread='XXX', role='user', message=form_data['question'])
+        ChatGpt.objects.create(user=login_user, thread='XXX', role='assistant', message=formatted_answer)
+
+        return super().form_valid(form)
