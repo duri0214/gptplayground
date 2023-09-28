@@ -29,7 +29,7 @@ class HomeView(FormView):
         chat_history = []  # TODO: 過去ログを含めるかどうかは要判断
         gpt_pdf_service = GptPdfService(PdfDataloader(file_path))
         result = gpt_pdf_service.gpt_answer(form_data['question'], chat_history)
-        # TODO: うまく改行できてねーなー
+        # TODO: うまく改行できてねーなー（一番下にスクロールするのもつけたほうがいいかも）
         source_documents = "<br>".join([doc.metadata['source'] for doc in result['source_documents']])
         formatted_answer = f'{result["answer"]}<br><br>{source_documents}'
         ChatGpt.objects.create(user=login_user, thread='XXX', role='user', message=form_data['question'])
