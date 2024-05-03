@@ -1,8 +1,8 @@
 import os
 from typing import List
 
-from langchain.document_loaders import PyPDFLoader
 from langchain.schema import Document
+from langchain_community.document_loaders import PyPDFLoader
 
 from retrieval_qa_with_source.domain.valueobject.dataloader import Dataloader
 
@@ -28,4 +28,4 @@ class PdfDataloader(Dataloader):
         filename = os.path.basename(self._file_path)
         for i, doc in enumerate(self.pages):
             doc.page_content = doc.page_content.replace("\n", " ")
-            doc.metadata = {"source": f'{filename} {i + 1}ページ'}
+            doc.metadata = {"source": f"{filename} {i + 1}ページ"}

@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from django.contrib.auth.models import User
 from django.urls import reverse_lazy
 from django.views.generic import FormView
@@ -27,12 +29,12 @@ class HomeView(FormView):
         form_data = form.cleaned_data
         login_user = User.objects.get(pk=1)  # TODO: request.user.id
 
-        file_path = str(
-            BASE_DIR
-            / r"retrieval_qa_with_source\tests\domain\valueobject\令和4年版少子化社会対策白書全体版（PDF版）.pdf"
+        file_path = (
+            Path(BASE_DIR)
+            / "retrieval_qa_with_source/tests/domain/valueobject/令和4年版少子化社会対策白書全体版（PDF版）.pdf"
         )
         chat_history = []  # TODO: 過去ログを含めるかどうかは要判断
-        gpt_pdf_service = GptPdfService(PdfDataloader(file_path))
+        gpt_pdf_service = GptPdfService(PdfDataloader(str(file_path)))
         result = gpt_pdf_service.gpt_answer(form_data["question"], chat_history)
         # TODO: うまく改行できてねーなー（一番下にスクロールするのもつけたほうがいいかも...っていうかAjaxだよ）
         source_documents = "<br>".join(

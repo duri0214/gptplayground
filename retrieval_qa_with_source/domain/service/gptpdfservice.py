@@ -1,10 +1,14 @@
 from typing import List
 
-from langchain.chat_models import ChatOpenAI
-from langchain.embeddings.openai import OpenAIEmbeddings
-from langchain.prompts import SystemMessagePromptTemplate, HumanMessagePromptTemplate, ChatPromptTemplate
-from langchain.vectorstores import Chroma
-from langchain.chains import RetrievalQAWithSourcesChain
+from langchain.chains.qa_with_sources.retrieval import RetrievalQAWithSourcesChain
+from langchain.prompts import (
+    SystemMessagePromptTemplate,
+    HumanMessagePromptTemplate,
+    ChatPromptTemplate,
+)
+from langchain_community.vectorstores import Chroma
+from langchain_openai import ChatOpenAI
+from langchain_openai import OpenAIEmbeddings
 
 from retrieval_qa_with_source.domain.valueobject.dataloader import Dataloader
 
@@ -25,7 +29,7 @@ class GptPdfService:
         """
         messages = [
             SystemMessagePromptTemplate.from_template(self.system_template),
-            HumanMessagePromptTemplate.from_template("{question}")
+            HumanMessagePromptTemplate.from_template("{question}"),
         ]
         self.prompt_template = ChatPromptTemplate.from_messages(messages)
 
@@ -36,9 +40,7 @@ class GptPdfService:
         """
         embeddings = OpenAIEmbeddings()
         vectorstore = Chroma.from_documents(
-            dataloader.data,
-            embedding=embeddings,
-            persist_directory='.'
+            dataloader.data, embedding=embeddings, persist_directory="."
         )
         vectorstore.persist()
 
@@ -49,15 +51,17 @@ class GptPdfService:
         Note: ChatOpenAI runs on 'gpt-3.5-turbo'
         """
         embeddings = OpenAIEmbeddings()
-        llm = ChatOpenAI(temperature=0, model_name='gpt-3.5-turbo')
+        llm = ChatOpenAI(temperature=0, model_name="gpt-3.5-turbo")
         texts = [x.page_content for x in self.dataloader.data]
         metadatas = [x.metadata for x in self.dataloader.data]
         docsearch = Chroma.from_texts(texts, embeddings, metadatas)
-        chain = RetrievalQAWithSourcesChain.from_chain_type(llm=llm,
-                                                            chain_type="stuff",
-                                                            reduce_k_below_max_tokens=True,
-                                                            return_source_documents=True,
-                                                            retriever=docsearch.as_retriever(),
-                                                            chain_type_kwargs={"prompt": self.prompt_template})
+        chain = RetrievalQAWithSourcesChain.from_chain_type(
+            llm=llm,
+            chain_type="stuff",
+            reduce_k_below_max_tokens=True,
+            return_source_documents=True,
+            retriever=docsearch.as_retriever(),
+            chain_type_kwargs={"prompt": self.prompt_template},
+        )
 
         return chain({"question": user_text})
