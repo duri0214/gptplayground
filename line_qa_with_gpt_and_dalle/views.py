@@ -1,6 +1,10 @@
+import json
+
 from django.contrib.auth.models import User
+from django.http import HttpResponse
 from django.urls import reverse_lazy
-from django.views.generic import FormView
+from django.views.decorators.csrf import csrf_exempt
+from django.views.generic import FormView, TemplateView
 
 from line_qa_with_gpt_and_dalle.forms import UserTextForm
 from line_qa_with_gpt_and_dalle.models import ChatLogsWithLine
@@ -34,3 +38,29 @@ class HomeView(FormView):
         # )
 
         return super().form_valid(form)
+
+
+@csrf_exempt
+class LineWebHookView(TemplateView):
+    @staticmethod
+    def post(request, *args, **kwargs):
+        """ラインの友達追加時に呼び出され、ラインのIDを登録する"""
+        request_json = json.loads(request.body.decode("utf-8"))
+        events = request_json["events"]
+
+        # If you run the validation from the `LINE DEVELOPERS` screen, `events` will be returned as `[]`
+        if events:
+            line_user_id = events[0]["source"]["userId"]
+
+            # webhook connection check at fixed id 'dead...beef'
+            if line_user_id != "Udeadbeefdeadbeefdeadbeefdeadbeef":
+                # follow | unblock
+                if events[0]["type"] == "follow":
+                    print("ここにきたらdbに追加")
+                    # LinePush.objects.create(line_user_id)
+                # block
+                if events[0]["type"] == "unfollow":
+                    print("ここにきたらdbから削除")
+                    # LinePush.objects.filter(line_user_id).delete()
+
+        return HttpResponse("`callback` returned 200", status=200)
