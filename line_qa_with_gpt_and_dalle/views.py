@@ -2,8 +2,8 @@ from django.contrib.auth.models import User
 from django.urls import reverse_lazy
 from django.views.generic import FormView
 
-from retrieval_qa_with_source.forms import UserTextForm
-from retrieval_qa_with_source.models import ChatLogsWithLine
+from line_qa_with_gpt_and_dalle.forms import UserTextForm
+from line_qa_with_gpt_and_dalle.models import ChatLogsWithLine
 
 
 class HomeView(FormView):

@@ -2,7 +2,7 @@ from django.contrib.auth.models import User
 from django.db import models
 
 
-class ChatLogsWithLine(models.Model):
+class ChatLogsWithSource(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     thread = models.CharField(max_length=255)
     role = models.CharField(max_length=255)

@@ -5,10 +5,10 @@ from django.urls import reverse_lazy
 from django.views.generic import FormView
 
 from config.settings import BASE_DIR
-from line_qa_with_gpt_and_dalle.models import ChatLogsWithSource
 from retrieval_qa_with_source.domain.service.gptpdfservice import GptPdfService
 from retrieval_qa_with_source.domain.valueobject.pdfdataloader import PdfDataloader
 from retrieval_qa_with_source.forms import UserTextForm
+from retrieval_qa_with_source.models import ChatLogsWithSource
 
 
 class HomeView(FormView):
