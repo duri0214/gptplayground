@@ -8,7 +8,7 @@ from line_qa_with_gpt_and_dalle.models import ChatLogsWithLine
 
 class MyChatCompletionMessage:
     def __init__(self, user_id: int, role: str, content: str, invisible: bool):
-        # TODO: domainい移動できるはず
+        # TODO: domainに移動できるはず
         self.user_id = user_id
         self.role = role
         self.content = content
