@@ -34,6 +34,17 @@ class MyChatCompletionMessage:
         return f"user_id: {self.user_id}, role: {self.role}, content: {self.content}, is_invisible: {self.invisible}"
 
 
+class Gender:
+    def __init__(self, gender):
+        if gender not in {"man", "woman"}:
+            raise ValueError("Invalid gender")
+        self.gender = gender
+
+    @property
+    def name(self) -> str:
+        return "男性" if self.gender == "man" else "女性"
+
+
 class GptService:
     def __init__(self):
         self.chatlogs_repository = ChatLogsRepository()
@@ -128,8 +139,8 @@ class GptService:
         return history
 
     @staticmethod
-    def get_prompt() -> str:
-        return """
+    def get_prompt(gender: Gender) -> str:
+        return f"""
             あなたは人材派遣会社の面接官です。
             
             #制約条件
@@ -138,6 +149,7 @@ class GptService:
             - 質問1は「目標設定力」評価します
             - 質問2は「コミュニケーション力」を評価します
             - scoreが70を超えたら、judgeが「合格」になる
+            - {gender.name} の口調で会話を行う
             
             #質問1
             - 新しいことを学ぶ際、どのような方法を探しますか？
@@ -146,8 +158,8 @@ class GptService:
             - ストレスが溜まったとき、どのように解消しますか？
             
             #判定結果例
-            {skill: 目標設定力, score: 50, judge: 不合格}
-            {skill: コミュニケーション力, score: 96, judge: 合格}
+            {{"skill": "目標設定力", "score": 50, "judge": "不合格"}}
+            {{"skill": "コミュニケーション力", "score": 96, "judge": "合格"}}
         """
 
     def insert_latest_chat_into_the_table(
