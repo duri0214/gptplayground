@@ -4,7 +4,7 @@ from typing import List
 from langchain.document_loaders import PyPDFLoader
 from langchain.schema import Document
 
-from chat.domain.valueobject.dataloader import Dataloader
+from retrieval_qa_with_source.domain.valueobject.dataloader import Dataloader
 
 
 class PdfDataloader(Dataloader):

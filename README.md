@@ -1,4 +1,4 @@
-# gptplayground
+# gpt-playground
 [独自のデータに対してchatgpt回答を得る](https://qiita.com/YoshitakaOkada/items/67de6a17b91a676d1112)
 
 ## 参考
@@ -6,7 +6,7 @@
 
 ## オペ
 ```
-python manage.py makemigrations chat
+python manage.py makemigrations retrieval_qa_with_source
 python manage.py migrate
 python manage.py collectstatic
 
