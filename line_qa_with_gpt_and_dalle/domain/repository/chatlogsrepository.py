@@ -6,11 +6,13 @@ class ChatLogsRepository:
     def __init__(self):
         print("Initializing ChatLogsRepository")
 
-    def find_chatlogs_by_id(self, pk: int) -> list[ChatLogsWithLine]:
-        pass
+    @staticmethod
+    def find_chatlogs_by_id(pk: int) -> list[ChatLogsWithLine]:
+        return ChatLogsWithLine.objects.get(pk=pk)
 
-    def find_chatlogs_by_user_id(self, user_id: int) -> list[ChatLogsWithLine]:
-        pass
+    @staticmethod
+    def find_chatlogs_by_user_id(user_id: int) -> list[ChatLogsWithLine]:
+        return ChatLogsWithLine.objects.filter(user_id=user_id)
 
     @staticmethod
     def insert(my_chat_completion_message: MyChatCompletionMessage):
