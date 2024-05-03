@@ -18,7 +18,7 @@ pip freeze > requirements.txt
 ## オペ
 
 ```
-python manage.py makemigrations retrieval_qa_with_source
+python manage.py makemigrations retrieval_qa_with_source line_qa_with_gpt_and_dalle
 python manage.py migrate
 python manage.py collectstatic
 

@@ -1,0 +1,30 @@
+{% extends 'line_qa_with_gpt_and_dalle/base.html' %}
+{% load static %}
+
+{% block content %}
+    <div class="container">
+        <div class="jumbotron">
+            <h1 class="display-4">ChatGPT with dalle and line</h1>
+            <p class="lead">The system that forms the basis of work</p>
+            <hr class="my-4">
+            <p>You can talk with ChatGPT and LINE.</p>
+        </div>
+
+        {% for chat_log in chat_logs %}
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">{{ chat_log.role }}</h5>
+                    <h6 class="card-subtitle mb-2 text-muted">{{ chat_log.thread }}</h6>
+                    <p class="card-text">{{ chat_log.message }}</p>
+                    <a href="#" class="card-link">Card link</a>
+                    <a href="#" class="card-link">Another link</a>
+                </div>
+            </div>
+        {% endfor %}
+        <form action="{% url 'line_qa_with_gpt:home' %}" method="POST">
+            {{ form }}
+            {% csrf_token %}
+            <input type="submit" value="送信">
+        </form>
+    </div>
+{% endblock %}
