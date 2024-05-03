@@ -18,6 +18,6 @@ from django.contrib import admin
 from django.urls import path, include
 
 urlpatterns = [
-    path('chat/', include('chat.urls')),
+    path('retrieval_qa_with_source/', include('retrieval_qa_with_source.urls')),
     path('admin/', admin.site.urls),
 ]

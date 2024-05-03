@@ -6,7 +6,7 @@ from langchain.prompts import SystemMessagePromptTemplate, HumanMessagePromptTem
 from langchain.vectorstores import Chroma
 from langchain.chains import RetrievalQAWithSourcesChain
 
-from chat.domain.valueobject.dataloader import Dataloader
+from retrieval_qa_with_source.domain.valueobject.dataloader import Dataloader
 
 
 class GptPdfService:

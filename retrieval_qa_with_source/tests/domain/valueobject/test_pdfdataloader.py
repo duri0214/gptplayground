@@ -1,6 +1,6 @@
 from unittest import TestCase
 
-from chat.domain.valueobject.pdfdataloader import PdfDataloader
+from retrieval_qa_with_source.domain.valueobject.pdfdataloader import PdfDataloader
 
 
 class TestPdfDataloader(TestCase):
