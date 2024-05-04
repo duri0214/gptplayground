@@ -182,10 +182,8 @@ class ModelDalleService(ModelService):
         """
         画像urlの有効期限は1時間。それ以上使いたいときは保存する。
         dall-e-3: 1024x1024, 1792x1024, 1024x1792 のいずれかしか生成できない
-        Note: 絵にするのはassistantが回答する前の「role: userのセリフ」です
         """
         response = self.post_to_gpt(my_chat_completion_message.content)
-        print(f"\ndall-e-3 response: {response}\n")
         image_url = response.data[0].url
         try:
             response = requests.get(image_url)

@@ -13,7 +13,7 @@ from openai import OpenAI
 from config.settings import BASE_DIR
 from line_qa_with_gpt_and_dalle.domain.service.openai import (
     MyChatCompletionMessage,
-    ModelGptService,
+    ModelDalleService,
 )
 from line_qa_with_gpt_and_dalle.forms import UserTextForm
 from line_qa_with_gpt_and_dalle.models import ChatLogsWithLine
@@ -41,20 +41,28 @@ class HomeView(FormView):
         environ.Env.read_env(Path(BASE_DIR, ".env"))
         client = OpenAI(api_key=env("OPENAI_API_KEY"))
 
-        # dalle_service = ModelDalleService(client)
-        # stt_service = ModelSpeechToTextService(client)
-
         # TODO: gpt用なのでfile_pathはありません
-        gpt_service = ModelGptService(client)
+        # gpt_service = ModelGptService(client)
+        # my_chat_completion_message = MyChatCompletionMessage(
+        #     user_id=login_user.pk,
+        #     role="user",
+        #     content=form_data["question"],
+        #     invisible=False,
+        # )
+        # gpt_service.generate(my_chat_completion_message, gender="man")
+
+        # TODO: 絵にするのはassistantが回答する前の「role: userのセリフ」です
+        #  ただし、gpt_serviceの中で呼べば難しくはなさそう
+        dalle_service = ModelDalleService(client)
         my_chat_completion_message = MyChatCompletionMessage(
-            user_id=login_user.pk,
+            user_id=login_user,
             role="user",
             content=form_data["question"],
             invisible=False,
         )
-        gpt_service.generate(my_chat_completion_message, gender="man")
+        dalle_service.generate(my_chat_completion_message)
 
-        # # TODO: tts用なのでfile_pathはありません
+        # TODO: tts用なのでfile_pathはありません
         # tts_service = ModelTextToSpeechService(client)
         # my_chat_completion_message = MyChatCompletionMessage(
         #     user_id=login_user.pk,
@@ -64,13 +72,7 @@ class HomeView(FormView):
         # )
         # tts_service.generate(my_chat_completion_message)
 
-        formatted_answer = 'result["answer"]'
-        # ChatLogs.objects.create(
-        #     user=login_user, thread="XXX", role="user", message=form_data["question"]
-        # )
-        # ChatLogs.objects.create(
-        #     user=login_user, thread="XXX", role="assistant", message=formatted_answer
-        # )
+        # stt_service = ModelSpeechToTextService(client)
 
         return super().form_valid(form)
 
