@@ -20,4 +20,12 @@ class ChatLogsRepository:
 
     @staticmethod
     def bulk_insert(my_chat_completion_message_list: list[MyChatCompletionMessage]):
-        ChatLogsWithLine.objects.bulk_create(my_chat_completion_message_list)
+        ChatLogsWithLine.objects.bulk_create(
+            [x.to_entity() for x in my_chat_completion_message_list]
+        )
+
+    @staticmethod
+    def upsert(my_chat_completion_message: MyChatCompletionMessage):
+        ChatLogsWithLine.objects.update_or_create(
+            my_chat_completion_message.to_entity()
+        )
