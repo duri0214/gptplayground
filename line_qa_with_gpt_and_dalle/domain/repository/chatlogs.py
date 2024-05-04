@@ -3,9 +3,6 @@ from line_qa_with_gpt_and_dalle.models import ChatLogsWithLine
 
 
 class ChatLogsRepository:
-    def __init__(self):
-        print("Initializing ChatLogsRepository")
-
     @staticmethod
     def find_chatlogs_by_id(pk: int) -> list[ChatLogsWithLine]:
         return ChatLogsWithLine.objects.get(pk=pk)
@@ -27,5 +24,12 @@ class ChatLogsRepository:
     @staticmethod
     def upsert(my_chat_completion_message: MyChatCompletionMessage):
         ChatLogsWithLine.objects.update_or_create(
-            my_chat_completion_message.to_entity()
+            id=my_chat_completion_message.id,
+            defaults={
+                "user": my_chat_completion_message.user_id,
+                "role": my_chat_completion_message.role,
+                "content": my_chat_completion_message.content,
+                "file_path": my_chat_completion_message.file_path,
+                "invisible": my_chat_completion_message.invisible,
+            },
         )
