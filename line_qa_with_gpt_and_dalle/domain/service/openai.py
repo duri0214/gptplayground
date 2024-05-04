@@ -10,7 +10,7 @@ from openai.types.chat import (
     ChatCompletion,
 )
 
-from config.settings import BASE_DIR
+from config.settings import STATIC_ROOT
 from line_qa_with_gpt_and_dalle.domain.repository.chatlogs import (
     ChatLogsRepository,
 )
@@ -204,7 +204,7 @@ class ModelDalleService(ModelService):
     def save(
         self, picture: Image, my_chat_completion_message: MyChatCompletionMessage
     ) -> MyChatCompletionMessage:
-        folder_path = Path(BASE_DIR) / "images"
+        folder_path = Path(STATIC_ROOT) / "images"
         if not folder_path.exists():
             folder_path.mkdir(parents=True, exist_ok=True)
         # This generates a random string of 10 characters
@@ -231,7 +231,7 @@ class ModelTextToSpeechService(ModelService):
         )
 
     def save(self, response, my_chat_completion_message: MyChatCompletionMessage):
-        folder_path = Path(BASE_DIR) / "audios"
+        folder_path = Path(STATIC_ROOT) / "audios"
         if not folder_path.exists():
             folder_path.mkdir(parents=True, exist_ok=True)
         # This generates a random string of 10 characters
