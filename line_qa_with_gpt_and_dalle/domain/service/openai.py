@@ -208,9 +208,11 @@ class ModelDalleService(ModelService):
         if not folder_path.exists():
             folder_path.mkdir(parents=True, exist_ok=True)
         # This generates a random string of 10 characters
-        random_string = secrets.token_hex(5)
-        my_chat_completion_message.image_url = f"{folder_path}/{random_string}.jpg"
-        picture.save(my_chat_completion_message.image_url)
+        random_filename = secrets.token_hex(5) + ".jpg"
+        relative_path_str = "images/" + random_filename
+        full_path = folder_path / random_filename
+        my_chat_completion_message.file_path = relative_path_str
+        picture.save(full_path)
         self.chatlogs_repository.upsert(my_chat_completion_message)
 
         return my_chat_completion_message
@@ -235,9 +237,11 @@ class ModelTextToSpeechService(ModelService):
         if not folder_path.exists():
             folder_path.mkdir(parents=True, exist_ok=True)
         # This generates a random string of 10 characters
-        random_string = secrets.token_hex(5)
-        my_chat_completion_message.image_url = f"{folder_path}/{random_string}.mp3"
-        response.write_to_file(my_chat_completion_message.image_url)
+        random_filename = secrets.token_hex(5) + ".mp3"
+        relative_path_str = "audios/" + random_filename
+        full_path = folder_path / random_filename
+        my_chat_completion_message.file_path = relative_path_str
+        response.write_to_file(full_path)
         self.chatlogs_repository.upsert(my_chat_completion_message)
 
         return my_chat_completion_message
