@@ -54,10 +54,10 @@ class ModelGptService:
         self.chatlogs_repository = ChatLogsRepository()
 
     def generate(
-        self, gpt_client: OpenAI, user_id: int, new_chat: str
+        self, user_id: int, new_chat: str, gender: str
     ) -> MyChatCompletionMessage:
 
-        chat_history = self.get_chat_history(user_id)
+        chat_history = self.get_chat_history(user_id, Gender(gender))
 
         # 会話が始まっているならユーザの入力したチャットをinsertしてからChatGPTに全投げする
         # ユーザのボタン押下で「プロンプト」と「さぁはじめましょう」の2行がinsertされるので
@@ -108,7 +108,7 @@ class ModelGptService:
             invisible=assistant.invisible,
         )
 
-    def get_chat_history(self, user_id: int) -> list[dict]:
+    def get_chat_history(self, user_id: int, gender: Gender) -> list[dict]:
         chatlogs_list = self.chatlogs_repository.find_chatlogs_by_user_id(user_id)
 
         # TODO: historyが .to_dict() で増えていくけどこれはたしかSQLAlchemyのbulc_insertの都合だったはずだ
@@ -127,7 +127,7 @@ class ModelGptService:
                 MyChatCompletionMessage(
                     user_id=user_id,
                     role="system",
-                    content=self.get_prompt(),
+                    content=self.get_prompt(gender),
                     invisible=True,
                 ),
                 MyChatCompletionMessage(
