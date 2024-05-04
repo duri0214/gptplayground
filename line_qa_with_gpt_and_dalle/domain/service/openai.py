@@ -300,3 +300,20 @@ class ModelTextToSpeechService(ModelService):
         self.chatlogs_repository.upsert(my_chat_completion_message)
 
         return my_chat_completion_message
+
+
+class ModelSpeechToTextService(ModelService):
+    def generate(self, my_chat_completion_message: MyChatCompletionMessage):
+        if os.path.exists(my_chat_completion_message.image_url):
+            response = self.post_to_gpt(my_chat_completion_message.image_url)
+            print(f"\n音声ファイルは「{response.text}」とテキスト化されました\n")
+            self.save(my_chat_completion_message)
+        else:
+            print(f"音声ファイル {my_chat_completion_message.image_url} は存在しません")
+
+    def post_to_gpt(self, path_to_audio: str):
+        audio = open(path_to_audio, "rb")
+        return self.client.audio.transcriptions.create(model="wisper-1", file=audio)
+
+    def save(self, my_chat_completion_message: MyChatCompletionMessage):
+        self.chatlogs_repository.upsert(my_chat_completion_message)
