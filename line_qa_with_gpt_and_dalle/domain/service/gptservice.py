@@ -7,6 +7,7 @@ from openai.types.chat import (
     ChatCompletionSystemMessageParam,
     ChatCompletionUserMessageParam,
     ChatCompletionAssistantMessageParam,
+    ChatCompletion,
 )
 
 from line_qa_with_gpt_and_dalle.domain.repository.chatlogsrepository import (
@@ -78,12 +79,7 @@ class ModelGptService:
                     user_id=user_id, role="user", content=new_chat
                 )
             )
-
-        response = self.client.chat.completions.create(
-            model="gpt-4-turbo",
-            messages=[x.to_origin_param() for x in chat_history],
-            temperature=0.5,
-        )
+        response = self.post_to_gpt(chat_history)
 
         assistant = self.insert_latest_chat_into_the_table(
             user_id=user_id,
@@ -101,12 +97,7 @@ class ModelGptService:
                     invisible=True,
                 )
             )
-
-            response = self.client.chat.completions.create(
-                model="gpt-4-turbo",
-                messages=[x.to_origin_param() for x in chat_history],
-                temperature=0.5,
-            )
+            response = self.post_to_gpt(chat_history)
 
             assistant = self.insert_latest_chat_into_the_table(
                 user_id=user_id,
@@ -174,6 +165,15 @@ class ModelGptService:
             {{"skill": "目標設定力", "score": 50, "judge": "不合格"}}
             {{"skill": "コミュニケーション力", "score": 96, "judge": "合格"}}
         """
+
+    def post_to_gpt(
+        self, chat_history: list[MyChatCompletionMessage]
+    ) -> ChatCompletion:
+        return self.client.chat.completions.create(
+            model="gpt-4-turbo",
+            messages=[x.to_origin_param() for x in chat_history],
+            temperature=0.5,
+        )
 
     def insert_latest_chat_into_the_table(
         self, user_id: int, role: str, content: str, invisible: bool = False
