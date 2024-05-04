@@ -13,7 +13,13 @@ class ChatLogsRepository:
 
     @staticmethod
     def insert(my_chat_completion_message: MyChatCompletionMessage):
-        ChatLogsWithLine.objects.create(my_chat_completion_message.to_entity())
+        ChatLogsWithLine.objects.create(
+            user_id=my_chat_completion_message.user_id,
+            role=my_chat_completion_message.role,
+            content=my_chat_completion_message.content,
+            file_path=my_chat_completion_message.file_path,
+            invisible=my_chat_completion_message.invisible,
+        )
 
     @staticmethod
     def bulk_insert(my_chat_completion_message_list: list[MyChatCompletionMessage]):
