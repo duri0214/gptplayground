@@ -172,8 +172,8 @@ class ModelGptService(ModelService):
             - ストレスが溜まったとき、どのように解消しますか？
             
             #判定結果例
-            {{"skill": "目標設定力", "score": 50, "judge": "不合格"}}
-            {{"skill": "コミュニケーション力", "score": 96, "judge": "合格"}}
+            [{{"skill": "目標設定力", "score": 50, "judge": "不合格"}},
+            {{"skill": "コミュニケーション力", "score": 96, "judge": "合格"}}]
         """
 
 
