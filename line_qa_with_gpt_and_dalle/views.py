@@ -12,7 +12,6 @@ from openai import OpenAI
 
 from config.settings import BASE_DIR
 from line_qa_with_gpt_and_dalle.domain.service.openai import (
-    # ModelTextToSpeechService,　# TODO: tts用
     MyChatCompletionMessage,
     ModelGptService,
 )
