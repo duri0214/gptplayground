@@ -69,13 +69,13 @@ class ModelGptService(ModelService):
         )
         chat_history.append(self.save(latest_assistant))
 
-        if "アセスメントは終了" in latest_assistant.content:
+        if "本日は面接にご参加いただき" in latest_assistant.content:
             chat_history.append(
                 self.save(
                     MyChatCompletionMessage(
                         user_id=latest_assistant.user_id,
                         role="user",
-                        content="判定結果をjsonで出してください",
+                        content="評価結果をjsonで出力してください",
                         invisible=True,
                     )
                 )
@@ -84,9 +84,9 @@ class ModelGptService(ModelService):
 
             latest_assistant = MyChatCompletionMessage(
                 user_id=my_chat_completion_message.user_id,
-                role=response[0].message.role,
-                content=response[0].message.content,
-                invisible=False,
+                role=response.choices[0].message.role,
+                content=response.choices[0].message.content,
+                invisible=True,
             )
             chat_history.append(self.save(latest_assistant))
 
@@ -158,11 +158,12 @@ class ModelGptService(ModelService):
             
             #制約条件
             - 会話の前にあいさつをします
-            - 質問1のあとに質問2を行う。質問2が終わったら判定結果例のように、判定結果を出力する
+            - 質問1のあとに質問2を行う。質問2が終わったら、感想を述べるとともに「本日は面接にご参加いただき、ありがとうございました。」と言って終わりましょう。判定結果は出力してはいけません
             - 質問1は「目標設定力」評価します
             - 質問2は「コミュニケーション力」を評価します
             - scoreが70を超えたら、judgeが「合格」になる
             - {gender.name} の口調で会話を行う
+            - 「評価結果をjsonで出力してください」と入力されたら、判定結果例のように判定結果を出力する
             
             #質問1
             - 新しいことを学ぶ際、どのような方法を探しますか？
