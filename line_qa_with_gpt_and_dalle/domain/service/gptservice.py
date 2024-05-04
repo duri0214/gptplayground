@@ -3,6 +3,11 @@ import secrets
 
 from PIL import Image
 from openai import OpenAI
+from openai.types.chat import (
+    ChatCompletionSystemMessageParam,
+    ChatCompletionUserMessageParam,
+    ChatCompletionAssistantMessageParam,
+)
 
 from line_qa_with_gpt_and_dalle.domain.repository.chatlogsrepository import (
     ChatLogsRepository,
@@ -18,13 +23,17 @@ class MyChatCompletionMessage:
         self.content = content
         self.invisible = invisible
 
-    def to_dict(self):
-        return {
-            "user_id": self.user_id,
-            "role": self.role,
-            "content": self.content,
-            "invisible": self.invisible,
-        }
+    def to_origin_param(self):
+        if self.role == "system":
+            temp = ChatCompletionSystemMessageParam(role="system", content=self.content)
+        elif self.role == "assistant":
+            temp = ChatCompletionAssistantMessageParam(
+                role="assistant", content=self.content
+            )
+        else:
+            temp = ChatCompletionUserMessageParam(role="user", content=self.content)
+
+        return temp
 
     def to_entity(self):
         return ChatLogsWithLine(
@@ -67,11 +76,13 @@ class ModelGptService:
             chat_history.append(
                 self.insert_latest_chat_into_the_table(
                     user_id=user_id, role="user", content=new_chat
-                ).to_dict()
+                )
             )
 
         response = self.client.chat.completions.create(
-            model="gpt-4-turbo", messages=chat_history, temperature=0.5
+            model="gpt-4-turbo",
+            messages=[x.to_origin_param() for x in chat_history],
+            temperature=0.5,
         )
 
         assistant = self.insert_latest_chat_into_the_table(
@@ -79,7 +90,7 @@ class ModelGptService:
             role=response[0].message.role,
             content=response[0].message.content,
         )
-        chat_history.append(assistant.to_dict())
+        chat_history.append(assistant)
 
         if "アセスメントは終了" in assistant.content:
             chat_history.append(
@@ -88,11 +99,13 @@ class ModelGptService:
                     role="user",
                     content="判定結果をjsonで出してください",
                     invisible=True,
-                ).to_dict()
+                )
             )
 
             response = self.client.chat.completions.create(
-                model="gpt-4-turbo", messages=chat_history, temperature=0.5
+                model="gpt-4-turbo",
+                messages=[x.to_origin_param() for x in chat_history],
+                temperature=0.5,
             )
 
             assistant = self.insert_latest_chat_into_the_table(
@@ -100,16 +113,13 @@ class ModelGptService:
                 role=response[0].message.role,
                 content=response[0].message.content,
             )
-            chat_history.append(assistant.to_dict())
+            chat_history.append(assistant)
 
-        return MyChatCompletionMessage(
-            user_id=assistant.user_id,
-            role=assistant.role,
-            content=assistant.content,
-            invisible=assistant.invisible,
-        )
+        return assistant
 
-    def get_chat_history(self, user_id: int, gender: Gender) -> list[dict]:
+    def get_chat_history(
+        self, user_id: int, gender: Gender
+    ) -> list[MyChatCompletionMessage]:
         chatlogs_list = self.chatlogs_repository.find_chatlogs_by_user_id(user_id)
 
         if chatlogs_list:
@@ -139,8 +149,7 @@ class ModelGptService:
             ]
             self.bulk_insert_latest_chat_into_the_table(history)
 
-        # TODO: historyが .to_dict() で増えていくけどこれはたしかSQLAlchemyのbulc_insertの都合だったはずだ
-        return [x.to_dict() for x in history]
+        return history
 
     @staticmethod
     def get_prompt(gender: Gender) -> str:
