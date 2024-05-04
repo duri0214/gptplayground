@@ -12,17 +12,17 @@ class MyChatCompletionMessage:
         self,
         user_id: int,
         role: str,
-        content: str,
         invisible: bool,
         pk: int = None,
+        content: str = None,
         file_path: str = None,
     ):
         self.id = pk
         self.user_id = user_id
         self.role = role
         self.content = content
-        self.invisible = invisible
         self.file_path = file_path
+        self.invisible = invisible
 
     def to_origin(self):
         if self.role == "system":

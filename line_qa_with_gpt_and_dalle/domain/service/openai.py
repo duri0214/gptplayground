@@ -40,6 +40,8 @@ class ModelGptService(ModelService):
     def generate(
         self, my_chat_completion_message: MyChatCompletionMessage, gender: str
     ) -> list[MyChatCompletionMessage]:
+        if my_chat_completion_message.content is None:
+            raise Exception("content is None")
 
         chat_history = self.get_chat_history(
             my_chat_completion_message.user_id, Gender(gender)
@@ -183,6 +185,8 @@ class ModelDalleService(ModelService):
         画像urlの有効期限は1時間。それ以上使いたいときは保存する。
         dall-e-3: 1024x1024, 1792x1024, 1024x1792 のいずれかしか生成できない
         """
+        if my_chat_completion_message.content is None:
+            raise Exception("content is None")
         response = self.post_to_gpt(my_chat_completion_message.content)
         image_url = response.data[0].url
         try:
@@ -230,6 +234,8 @@ class ModelDalleService(ModelService):
 
 class ModelTextToSpeechService(ModelService):
     def generate(self, my_chat_completion_message: MyChatCompletionMessage):
+        if my_chat_completion_message.content is None:
+            raise Exception("content is None")
         response = self.post_to_gpt(my_chat_completion_message.content)
         self.save(response, my_chat_completion_message)
 
@@ -255,8 +261,12 @@ class ModelTextToSpeechService(ModelService):
 
 class ModelSpeechToTextService(ModelService):
     def generate(self, my_chat_completion_message: MyChatCompletionMessage):
-        if Path(my_chat_completion_message.file_path).exists():
-            response = self.post_to_gpt(my_chat_completion_message.file_path)
+        if my_chat_completion_message.file_path is None:
+            raise Exception("file_path is None")
+        full_path = Path(STATIC_ROOT) / my_chat_completion_message.file_path
+        if full_path.exists():
+            response = self.post_to_gpt(str(full_path))
+            my_chat_completion_message.content = response.text
             print(f"\n音声ファイルは「{response.text}」とテキスト化されました\n")
             self.save(my_chat_completion_message)
         else:
@@ -264,7 +274,7 @@ class ModelSpeechToTextService(ModelService):
 
     def post_to_gpt(self, path_to_audio: str):
         audio = open(path_to_audio, "rb")
-        return self.client.audio.transcriptions.create(model="wisper-1", file=audio)
+        return self.client.audio.transcriptions.create(model="whisper-1", file=audio)
 
     def save(self, my_chat_completion_message: MyChatCompletionMessage):
         self.chatlogs_repository.upsert(my_chat_completion_message)

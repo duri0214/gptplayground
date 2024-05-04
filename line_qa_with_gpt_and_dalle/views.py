@@ -13,7 +13,7 @@ from openai import OpenAI
 from config.settings import BASE_DIR
 from line_qa_with_gpt_and_dalle.domain.service.openai import (
     MyChatCompletionMessage,
-    ModelDalleService,
+    ModelSpeechToTextService,
 )
 from line_qa_with_gpt_and_dalle.forms import UserTextForm
 from line_qa_with_gpt_and_dalle.models import ChatLogsWithLine
@@ -53,14 +53,14 @@ class HomeView(FormView):
 
         # TODO: 絵にするのはassistantが回答する前の「role: userのセリフ」です
         #  ただし、gpt_serviceの中で呼べば難しくはなさそう
-        dalle_service = ModelDalleService(client)
-        my_chat_completion_message = MyChatCompletionMessage(
-            user_id=login_user,
-            role="user",
-            content=form_data["question"],
-            invisible=False,
-        )
-        dalle_service.generate(my_chat_completion_message)
+        # dalle_service = ModelDalleService(client)
+        # my_chat_completion_message = MyChatCompletionMessage(
+        #     user_id=login_user,
+        #     role="user",
+        #     content=form_data["question"],
+        #     invisible=False,
+        # )
+        # dalle_service.generate(my_chat_completion_message)
 
         # TODO: tts用なのでfile_pathはありません
         # tts_service = ModelTextToSpeechService(client)
@@ -72,14 +72,23 @@ class HomeView(FormView):
         # )
         # tts_service.generate(my_chat_completion_message)
 
-        # stt_service = ModelSpeechToTextService(client)
+        # TODO: stt用なのでcontentはありません
+        stt_service = ModelSpeechToTextService(client)
+        my_chat_completion_message = MyChatCompletionMessage(
+            user_id=login_user,
+            role="user",
+            file_path="audios/53f86c30db.mp3",
+            invisible=False,
+        )
+        stt_service.generate(my_chat_completion_message)
 
         return super().form_valid(form)
 
 
 @csrf_exempt
 class LineWebHookView(View):
-    def post(self, request, *args, **kwargs):
+    @staticmethod
+    def post(request, *args, **kwargs):
         """ラインの友達追加時に呼び出され、ラインのIDを登録する"""
         request_json = json.loads(request.body.decode("utf-8"))
         events = request_json["events"]
