@@ -1,4 +1,4 @@
-from line_qa_with_gpt_and_dalle.domain.service.gptservice import MyChatCompletionMessage
+from line_qa_with_gpt_and_dalle.domain.service.openai import MyChatCompletionMessage
 from line_qa_with_gpt_and_dalle.models import ChatLogsWithLine
 
 
