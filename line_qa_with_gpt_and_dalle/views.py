@@ -11,10 +11,6 @@ from django.views.generic import FormView
 from openai import OpenAI
 
 from config.settings import BASE_DIR
-from line_qa_with_gpt_and_dalle.domain.service.openai import (
-    MyChatCompletionMessage,
-    ModelSpeechToTextService,
-)
 from line_qa_with_gpt_and_dalle.forms import UserTextForm
 from line_qa_with_gpt_and_dalle.models import ChatLogsWithLine
 
@@ -73,14 +69,14 @@ class HomeView(FormView):
         # tts_service.generate(my_chat_completion_message)
 
         # TODO: stt用なのでcontentはありません
-        stt_service = ModelSpeechToTextService(client)
-        my_chat_completion_message = MyChatCompletionMessage(
-            user_id=login_user,
-            role="user",
-            file_path="audios/53f86c30db.mp3",
-            invisible=False,
-        )
-        stt_service.generate(my_chat_completion_message)
+        # stt_service = ModelSpeechToTextService(client)
+        # my_chat_completion_message = MyChatCompletionMessage(
+        #     user_id=login_user,
+        #     role="user",
+        #     file_path="audios/53f86c30db.mp3",
+        #     invisible=False,
+        # )
+        # stt_service.generate(my_chat_completion_message)
 
         return super().form_valid(form)
 
