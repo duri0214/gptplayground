@@ -11,15 +11,17 @@
         </div>
 
         {% for chat_log in chat_logs %}
-            <div class="card mb-3">
-                <div class="card-body">
-                    <h5 class="card-title">{{ chat_log.role }}</h5>
-                    <h6 class="card-subtitle mb-2 text-muted">file: {{ chat_log.file_path }}</h6>
-                    <p class="card-text">{{ chat_log.content }}</p>
-                    <a href="#" class="card-link">Card link</a>
-                    <a href="#" class="card-link">Another link</a>
+            {% if not chat_log.invisible %}
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ chat_log.role }}</h5>
+                        <h6 class="card-subtitle mb-2 text-muted">file: {{ chat_log.file_path }}</h6>
+                        <p class="card-text">{{ chat_log.content }}</p>
+                        <a href="#" class="card-link">Card link</a>
+                        <a href="#" class="card-link">Another link</a>
+                    </div>
                 </div>
-            </div>
+            {% endif %}
         {% endfor %}
         <form action="{% url 'line_qa_with_gpt:home' %}" method="POST">
             {{ form }}
