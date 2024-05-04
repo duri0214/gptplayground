@@ -1,3 +1,7 @@
+import os
+import secrets
+
+from PIL import Image
 from openai import OpenAI
 
 from line_qa_with_gpt_and_dalle.domain.repository.chatlogsrepository import (
@@ -45,11 +49,11 @@ class Gender:
         return "男性" if self.gender == "man" else "女性"
 
 
-class GptService:
+class ModelGptService:
     def __init__(self):
         self.chatlogs_repository = ChatLogsRepository()
 
-    def generate_with_gpt(
+    def generate(
         self, gpt_client: OpenAI, user_id: int, new_chat: str
     ) -> MyChatCompletionMessage:
 
@@ -179,5 +183,24 @@ class GptService:
 
         return my_chat_completion_message_list[-1]
 
-    def generate_with_dalle(self):
+
+class ModelDalleService:
+    def __init__(self):
+        self.chatlogs_repository = ChatLogsRepository()
+
+    def generate(self):
         pass
+
+    @staticmethod
+    def resize(picture: Image) -> Image:
+        return picture.resize((512, 512))
+
+    @staticmethod
+    def save(picture: Image):
+        # TODO: chatlogs modelにランダム名でパスを保存するのがいいかもしれない
+        folder_path = "app/images"
+        # This generates a random string of 10 characters
+        random_string = secrets.token_hex(5)
+        if not os.path.exists(folder_path):
+            os.makedirs(folder_path)
+        picture.save(f"{folder_path}/{random_string}.jpg")
