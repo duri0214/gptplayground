@@ -179,10 +179,10 @@ class ModelGptService:
 
     def bulk_insert_latest_chat_into_the_table(
         self, my_chat_completion_message_list: list[MyChatCompletionMessage]
-    ):
+    ) -> list[MyChatCompletionMessage]:
         self.chatlogs_repository.bulk_insert(my_chat_completion_message_list)
 
-        return my_chat_completion_message_list[-1]
+        return my_chat_completion_message_list
 
 
 class ModelDalleService:
