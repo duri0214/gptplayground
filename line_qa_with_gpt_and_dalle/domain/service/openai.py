@@ -1,5 +1,6 @@
 import os
 import secrets
+from abc import ABC, abstractmethod
 
 from PIL import Image
 from openai import OpenAI
@@ -59,14 +60,28 @@ class Gender:
         return "男性" if self.gender == "man" else "女性"
 
 
-class ModelGptService:
+class ModelService(ABC):
     def __init__(self, client: OpenAI):
         self.chatlogs_repository = ChatLogsRepository()
         self.client = client
 
+    @abstractmethod
+    def generate(self, **kwargs):
+        pass
+
+    @abstractmethod
+    def post_to_gpt(self, **kwargs):
+        pass
+
+    @abstractmethod
+    def save(self, **kwargs):
+        pass
+
+
+class ModelGptService(ModelService):
     def generate(
         self, user_id: int, new_chat: str, gender: str
-    ) -> MyChatCompletionMessage:
+    ) -> list[MyChatCompletionMessage]:
 
         chat_history = self.get_chat_history(user_id, Gender(gender))
 
@@ -75,38 +90,44 @@ class ModelGptService:
         # 3以上あれば会話が始まっていると判定することができる
         if len(chat_history) > 2:
             chat_history.append(
-                self.insert_latest_chat_into_the_table(
-                    user_id=user_id, role="user", content=new_chat
+                self.save(
+                    MyChatCompletionMessage(
+                        user_id=user_id, role="user", content=new_chat, invisible=False
+                    )
                 )
             )
         response = self.post_to_gpt(chat_history)
 
-        assistant = self.insert_latest_chat_into_the_table(
+        latest_assistant = MyChatCompletionMessage(
             user_id=user_id,
             role=response[0].message.role,
             content=response[0].message.content,
+            invisible=False,
         )
-        chat_history.append(assistant)
+        chat_history.append(self.save(latest_assistant))
 
-        if "アセスメントは終了" in assistant.content:
+        if "アセスメントは終了" in latest_assistant.content:
             chat_history.append(
-                self.insert_latest_chat_into_the_table(
-                    user_id=assistant.user_id,
-                    role="user",
-                    content="判定結果をjsonで出してください",
-                    invisible=True,
+                self.save(
+                    MyChatCompletionMessage(
+                        user_id=latest_assistant.user_id,
+                        role="user",
+                        content="判定結果をjsonで出してください",
+                        invisible=True,
+                    )
                 )
             )
             response = self.post_to_gpt(chat_history)
 
-            assistant = self.insert_latest_chat_into_the_table(
+            latest_assistant = MyChatCompletionMessage(
                 user_id=user_id,
                 role=response[0].message.role,
                 content=response[0].message.content,
+                invisible=False,
             )
-            chat_history.append(assistant)
+            chat_history.append(self.save(latest_assistant))
 
-        return assistant
+        return chat_history
 
     def get_chat_history(
         self, user_id: int, gender: Gender
@@ -138,7 +159,7 @@ class ModelGptService:
                     invisible=False,
                 ),
             ]
-            self.bulk_insert_latest_chat_into_the_table(history)
+            self.save(history)
 
         return history
 
@@ -175,7 +196,23 @@ class ModelGptService:
             temperature=0.5,
         )
 
-    def insert_latest_chat_into_the_table(
+    def save(
+        self, messages: MyChatCompletionMessage | list[MyChatCompletionMessage]
+    ) -> MyChatCompletionMessage | list[MyChatCompletionMessage]:
+        if isinstance(messages, list):
+            self._bulk_insert_latest_chat_into_the_table(messages)
+        elif isinstance(messages, MyChatCompletionMessage):
+            self._insert_latest_chat_into_the_table(
+                messages.user_id, messages.role, messages.content, messages.invisible
+            )
+        else:
+            raise ValueError(
+                f"Unexpected type {type(messages)}. Expected MyChatCompletionMessage or list[MyChatCompletionMessage]."
+            )
+
+        return messages
+
+    def _insert_latest_chat_into_the_table(
         self, user_id: int, role: str, content: str, invisible: bool = False
     ) -> MyChatCompletionMessage:
         my_chat_completion_message = MyChatCompletionMessage(
@@ -185,7 +222,7 @@ class ModelGptService:
 
         return my_chat_completion_message
 
-    def bulk_insert_latest_chat_into_the_table(
+    def _bulk_insert_latest_chat_into_the_table(
         self, my_chat_completion_message_list: list[MyChatCompletionMessage]
     ) -> list[MyChatCompletionMessage]:
         self.chatlogs_repository.bulk_insert(my_chat_completion_message_list)
@@ -193,11 +230,7 @@ class ModelGptService:
         return my_chat_completion_message_list
 
 
-class ModelDalleService:
-    def __init__(self, client: OpenAI):
-        self.chatlogs_repository = ChatLogsRepository()
-        self.client = client
-
+class ModelDalleService(ModelService):
     def generate(self, user_id: str, prompt: str):
         """
         画像urlの有効期限は1時間。それ以上使いたいときは保存する。
@@ -208,6 +241,9 @@ class ModelDalleService:
     @staticmethod
     def resize(picture: Image) -> Image:
         return picture.resize((512, 512))
+
+    def post_to_gpt(self, xxx: str):
+        pass
 
     @staticmethod
     def save(picture: Image):
