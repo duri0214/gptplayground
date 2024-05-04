@@ -38,10 +38,12 @@ class ModelService(ABC):
 
 class ModelGptService(ModelService):
     def generate(
-        self, user_id: int, new_chat: str, gender: str
+        self, my_chat_completion_message: MyChatCompletionMessage, gender: str
     ) -> list[MyChatCompletionMessage]:
 
-        chat_history = self.get_chat_history(user_id, Gender(gender))
+        chat_history = self.get_chat_history(
+            my_chat_completion_message.user_id, Gender(gender)
+        )
 
         # 会話が始まっているならユーザの入力したチャットをinsertしてからChatGPTに全投げする
         # ユーザのボタン押下で「プロンプト」と「さぁはじめましょう」の2行がinsertされるので
@@ -50,16 +52,19 @@ class ModelGptService(ModelService):
             chat_history.append(
                 self.save(
                     MyChatCompletionMessage(
-                        user_id=user_id, role="user", content=new_chat, invisible=False
+                        user_id=my_chat_completion_message.user_id,
+                        role=my_chat_completion_message.role,
+                        content=my_chat_completion_message.content,
+                        invisible=False,
                     )
                 )
             )
         response = self.post_to_gpt(chat_history)
 
         latest_assistant = MyChatCompletionMessage(
-            user_id=user_id,
-            role=response[0].message.role,
-            content=response[0].message.content,
+            user_id=my_chat_completion_message.user_id,
+            role=response.choices[0].message.role,
+            content=response.choices[0].message.content,
             invisible=False,
         )
         chat_history.append(self.save(latest_assistant))
@@ -78,7 +83,7 @@ class ModelGptService(ModelService):
             response = self.post_to_gpt(chat_history)
 
             latest_assistant = MyChatCompletionMessage(
-                user_id=user_id,
+                user_id=my_chat_completion_message.user_id,
                 role=response[0].message.role,
                 content=response[0].message.content,
                 invisible=False,
@@ -118,10 +123,12 @@ class ModelGptService(ModelService):
         if chatlogs_list:
             history = [
                 MyChatCompletionMessage(
+                    pk=chatlogs.pk,
                     user_id=int(chatlogs.user_id),
                     role=chatlogs.role,
-                    content=chatlogs.message,
+                    content=chatlogs.content,
                     invisible=False,
+                    file_path=chatlogs.file_path,
                 )
                 for chatlogs in chatlogs_list
             ]
