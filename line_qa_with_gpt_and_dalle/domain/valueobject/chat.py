@@ -14,8 +14,10 @@ class MyChatCompletionMessage:
         role: str,
         content: str,
         invisible: bool,
+        pk: int = None,
         file_path: str = None,
     ):
+        self.id = pk
         self.user_id = user_id
         self.role = role
         self.content = content
@@ -34,7 +36,7 @@ class MyChatCompletionMessage:
 
         return temp
 
-    def to_entity(self):
+    def to_entity(self) -> ChatLogsWithLine:
         return ChatLogsWithLine(
             user_id=self.user_id,
             role=self.role,
@@ -48,6 +50,6 @@ class MyChatCompletionMessage:
             f"user_id: {self.user_id}, "
             f"role: {self.role}, "
             f"content: {self.content}, "
-            f"is_invisible: {self.invisible}, "
+            f"invisible: {self.invisible}, "
             f"file_path: {self.file_path}"
         )
