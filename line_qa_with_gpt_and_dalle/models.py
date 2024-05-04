@@ -7,5 +7,5 @@ class ChatLogsWithLine(models.Model):
     thread = models.CharField(max_length=255)
     role = models.CharField(max_length=255)
     message = models.TextField()
-    image_url = models.CharField(max_length=255, null=True)
+    file_path = models.CharField(max_length=255, null=True)
     created_at = models.DateTimeField(auto_now_add=True)

@@ -26,14 +26,14 @@ class MyChatCompletionMessage:
         role: str,
         content: str,
         invisible: bool,
-        image_url: str = None,
+        file_path: str = None,
     ):
         # TODO: domainに移動できるはず
         self.user_id = user_id
         self.role = role
         self.content = content
         self.invisible = invisible
-        self.image_url = image_url
+        self.file_path = file_path
 
     def to_origin_param(self):
         if self.role == "system":
@@ -53,7 +53,7 @@ class MyChatCompletionMessage:
             role=self.role,
             content=self.content,
             invisible=self.invisible,
-            image_url=self.image_url,
+            file_path=self.file_path,
         )
 
     def __str__(self):
@@ -62,7 +62,7 @@ class MyChatCompletionMessage:
             f"role: {self.role}, "
             f"content: {self.content}, "
             f"is_invisible: {self.invisible}, "
-            f"image_url: {self.image_url}"
+            f"file_path: {self.file_path}"
         )
 
 
@@ -304,12 +304,12 @@ class ModelTextToSpeechService(ModelService):
 
 class ModelSpeechToTextService(ModelService):
     def generate(self, my_chat_completion_message: MyChatCompletionMessage):
-        if os.path.exists(my_chat_completion_message.image_url):
-            response = self.post_to_gpt(my_chat_completion_message.image_url)
+        if os.path.exists(my_chat_completion_message.file_path):
+            response = self.post_to_gpt(my_chat_completion_message.file_path)
             print(f"\n音声ファイルは「{response.text}」とテキスト化されました\n")
             self.save(my_chat_completion_message)
         else:
-            print(f"音声ファイル {my_chat_completion_message.image_url} は存在しません")
+            print(f"音声ファイル {my_chat_completion_message.file_path} は存在しません")
 
     def post_to_gpt(self, path_to_audio: str):
         audio = open(path_to_audio, "rb")
