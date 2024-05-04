@@ -277,3 +277,26 @@ class ModelDalleService(ModelService):
     @staticmethod
     def resize(picture: Image) -> Image:
         return picture.resize((512, 512))
+
+
+class ModelTextToSpeechService(ModelService):
+    def generate(self, my_chat_completion_message: MyChatCompletionMessage):
+        response = self.post_to_gpt(my_chat_completion_message.content)
+        self.save(response, my_chat_completion_message)
+
+    def post_to_gpt(self, text: str):
+        return self.client.audio.speech.create(
+            model="tts-1", voice="alloy", input=text, response_format="mp3"
+        )
+
+    def save(self, response, my_chat_completion_message: MyChatCompletionMessage):
+        folder_path = "app/audios"
+        if not os.path.exists(folder_path):
+            os.makedirs(folder_path)
+        # This generates a random string of 10 characters
+        random_string = secrets.token_hex(5)
+        my_chat_completion_message.image_url = f"{folder_path}/{random_string}.mp3"
+        response.write_to_file(my_chat_completion_message.image_url)
+        self.chatlogs_repository.upsert(my_chat_completion_message)
+
+        return my_chat_completion_message
