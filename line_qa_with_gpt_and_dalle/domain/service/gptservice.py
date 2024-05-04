@@ -50,8 +50,9 @@ class Gender:
 
 
 class ModelGptService:
-    def __init__(self):
+    def __init__(self, client: OpenAI):
         self.chatlogs_repository = ChatLogsRepository()
+        self.client = client
 
     def generate(
         self, user_id: int, new_chat: str, gender: str
@@ -69,7 +70,7 @@ class ModelGptService:
                 ).to_dict()
             )
 
-        response = gpt_client.chat.completions.create(
+        response = self.client.chat.completions.create(
             model="gpt-4-turbo", messages=chat_history, temperature=0.5
         )
 
@@ -90,7 +91,7 @@ class ModelGptService:
                 ).to_dict()
             )
 
-            response = gpt_client.chat.completions.create(
+            response = self.client.chat.completions.create(
                 model="gpt-4-turbo", messages=chat_history, temperature=0.5
             )
 
@@ -185,8 +186,9 @@ class ModelGptService:
 
 
 class ModelDalleService:
-    def __init__(self):
+    def __init__(self, client: OpenAI):
         self.chatlogs_repository = ChatLogsRepository()
+        self.client = client
 
     def generate(self):
         pass
