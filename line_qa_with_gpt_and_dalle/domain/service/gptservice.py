@@ -112,7 +112,6 @@ class ModelGptService:
     def get_chat_history(self, user_id: int, gender: Gender) -> list[dict]:
         chatlogs_list = self.chatlogs_repository.find_chatlogs_by_user_id(user_id)
 
-        # TODO: historyが .to_dict() で増えていくけどこれはたしかSQLAlchemyのbulc_insertの都合だったはずだ
         if chatlogs_list:
             history = [
                 MyChatCompletionMessage(
@@ -120,11 +119,11 @@ class ModelGptService:
                     role=chatlogs.role,
                     content=chatlogs.message,
                     invisible=False,
-                ).to_dict()
+                )
                 for chatlogs in chatlogs_list
             ]
         else:
-            temp = [
+            history = [
                 MyChatCompletionMessage(
                     user_id=user_id,
                     role="system",
@@ -138,10 +137,10 @@ class ModelGptService:
                     invisible=False,
                 ),
             ]
-            self.bulk_insert_latest_chat_into_the_table(temp)
-            history = [x.to_dict() for x in temp]
+            self.bulk_insert_latest_chat_into_the_table(history)
 
-        return history
+        # TODO: historyが .to_dict() で増えていくけどこれはたしかSQLAlchemyのbulc_insertの都合だったはずだ
+        return [x.to_dict() for x in history]
 
     @staticmethod
     def get_prompt(gender: Gender) -> str:
@@ -190,7 +189,11 @@ class ModelDalleService:
         self.chatlogs_repository = ChatLogsRepository()
         self.client = client
 
-    def generate(self):
+    def generate(self, user_id: str, prompt: str):
+        """
+        画像urlの有効期限は1時間。それ以上使いたいときは保存する。
+        dall-e-3: 1024x1024, 1792x1024, 1024x1792 のいずれかしか生成できない
+        """
         pass
 
     @staticmethod
