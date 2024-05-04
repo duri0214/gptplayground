@@ -3,8 +3,9 @@ import json
 from django.contrib.auth.models import User
 from django.http import HttpResponse
 from django.urls import reverse_lazy
+from django.views import View
 from django.views.decorators.csrf import csrf_exempt
-from django.views.generic import FormView, TemplateView
+from django.views.generic import FormView
 
 from line_qa_with_gpt_and_dalle.forms import UserTextForm
 from line_qa_with_gpt_and_dalle.models import ChatLogsWithLine
@@ -41,9 +42,8 @@ class HomeView(FormView):
 
 
 @csrf_exempt
-class LineWebHookView(TemplateView):
-    @staticmethod
-    def post(request, *args, **kwargs):
+class LineWebHookView(View):
+    def post(self, request, *args, **kwargs):
         """ラインの友達追加時に呼び出され、ラインのIDを登録する"""
         request_json = json.loads(request.body.decode("utf-8"))
         events = request_json["events"]
@@ -63,4 +63,4 @@ class LineWebHookView(TemplateView):
                     print("ここにきたらdbから削除")
                     # LinePush.objects.filter(line_user_id).delete()
 
-        return HttpResponse("`callback` returned 200", status=200)
+        return HttpResponse(status=200)
