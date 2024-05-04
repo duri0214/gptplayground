@@ -264,11 +264,11 @@ class ModelDalleService(ModelService):
         self, picture: Image, my_chat_completion_message: MyChatCompletionMessage
     ) -> MyChatCompletionMessage:
         folder_path = "app/images"
+        if not os.path.exists(folder_path):
+            os.makedirs(folder_path)
         # This generates a random string of 10 characters
         random_string = secrets.token_hex(5)
         my_chat_completion_message.image_url = f"{folder_path}/{random_string}.jpg"
-        if not os.path.exists(folder_path):
-            os.makedirs(folder_path)
         picture.save(my_chat_completion_message.image_url)
         self.chatlogs_repository.upsert(my_chat_completion_message)
 
