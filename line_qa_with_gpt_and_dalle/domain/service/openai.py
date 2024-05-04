@@ -1,7 +1,9 @@
 import os
 import secrets
 from abc import ABC, abstractmethod
+from io import BytesIO
 
+import requests.exceptions
 from PIL import Image
 from openai import OpenAI
 from openai.types.chat import (
@@ -18,12 +20,20 @@ from line_qa_with_gpt_and_dalle.models import ChatLogsWithLine
 
 
 class MyChatCompletionMessage:
-    def __init__(self, user_id: int, role: str, content: str, invisible: bool):
+    def __init__(
+        self,
+        user_id: int,
+        role: str,
+        content: str,
+        invisible: bool,
+        image_url: str = None,
+    ):
         # TODO: domainに移動できるはず
         self.user_id = user_id
         self.role = role
         self.content = content
         self.invisible = invisible
+        self.image_url = image_url
 
     def to_origin_param(self):
         if self.role == "system":
@@ -43,10 +53,17 @@ class MyChatCompletionMessage:
             role=self.role,
             content=self.content,
             invisible=self.invisible,
+            image_url=self.image_url,
         )
 
     def __str__(self):
-        return f"user_id: {self.user_id}, role: {self.role}, content: {self.content}, is_invisible: {self.invisible}"
+        return (
+            f"user_id: {self.user_id}, "
+            f"role: {self.role}, "
+            f"content: {self.content}, "
+            f"is_invisible: {self.invisible}, "
+            f"image_url: {self.image_url}"
+        )
 
 
 class Gender:
@@ -212,25 +229,50 @@ class ModelGptService(ModelService):
 
 
 class ModelDalleService(ModelService):
-    def generate(self, user_id: str, prompt: str):
+    def generate(self, my_chat_completion_message: MyChatCompletionMessage):
         """
         画像urlの有効期限は1時間。それ以上使いたいときは保存する。
         dall-e-3: 1024x1024, 1792x1024, 1024x1792 のいずれかしか生成できない
+        Note: 絵にするのはassistantが回答する前の「role: userのセリフ」です
         """
-        pass
+        response = self.post_to_gpt(my_chat_completion_message.content)
+        print(f"\ndall-e-3 response: {response}\n")
+        image_url = response.data[0].url
+        try:
+            response = requests.get(image_url)
+            response.raise_for_status()
+            resized_picture = self.resize(picture=Image.open(BytesIO(response.content)))
+            my_chat_completion_message = self.save(
+                resized_picture,
+                my_chat_completion_message,
+            )
+        except requests.exceptions.HTTPError as http_error:
+            raise Exception(http_error)
+        except requests.exceptions.ConnectionError as connection_error:
+            raise Exception(connection_error)
+        except Exception as e:
+            raise Exception(e)
 
-    def post_to_gpt(self, xxx: str):
-        pass
+        return my_chat_completion_message
 
-    @staticmethod
-    def save(picture: Image):
-        # TODO: chatlogs modelにランダム名でパスを保存するのがいいかもしれない
+    def post_to_gpt(self, prompt: str):
+        return self.client.images.generate(
+            model="dall-e-3", prompt=prompt, size="1024x1024", quality="standard", n=1
+        )
+
+    def save(
+        self, picture: Image, my_chat_completion_message: MyChatCompletionMessage
+    ) -> MyChatCompletionMessage:
         folder_path = "app/images"
         # This generates a random string of 10 characters
         random_string = secrets.token_hex(5)
+        my_chat_completion_message.image_url = f"{folder_path}/{random_string}.jpg"
         if not os.path.exists(folder_path):
             os.makedirs(folder_path)
-        picture.save(f"{folder_path}/{random_string}.jpg")
+        picture.save(my_chat_completion_message.image_url)
+        self.chatlogs_repository.upsert(my_chat_completion_message)
+
+        return my_chat_completion_message
 
     @staticmethod
     def resize(picture: Image) -> Image:
