@@ -1,12 +1,20 @@
 import json
+from pathlib import Path
 
+import environ
 from django.contrib.auth.models import User
 from django.http import HttpResponse
 from django.urls import reverse_lazy
 from django.views import View
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import FormView
+from openai import OpenAI
 
+from config.settings import BASE_DIR
+from line_qa_with_gpt_and_dalle.domain.service.openai import (
+    ModelTextToSpeechService,
+    MyChatCompletionMessage,
+)
 from line_qa_with_gpt_and_dalle.forms import UserTextForm
 from line_qa_with_gpt_and_dalle.models import ChatLogsWithLine
 
@@ -21,7 +29,7 @@ class HomeView(FormView):
         login_user = User.objects.get(pk=1)  # TODO: request.user.id
         context["chat_logs"] = ChatLogsWithLine.objects.filter(
             user=login_user
-        ).order_by("thread", "created_at")
+        ).order_by("created_at")
 
         return context
 
@@ -29,7 +37,24 @@ class HomeView(FormView):
         form_data = form.cleaned_data
         login_user = User.objects.get(pk=1)  # TODO: request.user.id
 
-        chat_history = []  # TODO: 過去ログを含めるかどうかは要判断
+        env = environ.Env()
+        environ.Env.read_env(Path(BASE_DIR, ".env"))
+        client = OpenAI(api_key=env("OPENAI_API_KEY"))
+
+        # gpt_service = ModelGptService(client)
+        # dalle_service = ModelDalleService(client)
+        tts_service = ModelTextToSpeechService(client)
+        # stt_service = ModelSpeechToTextService(client)
+
+        # TODO: tts用なのでfile_pathはありません
+        my_chat_completion_message = MyChatCompletionMessage(
+            user_id=login_user,
+            role="user",
+            content=form_data["question"],
+            invisible=False,
+        )
+        tts_service.generate(my_chat_completion_message)
+
         formatted_answer = 'result["answer"]'
         # ChatLogs.objects.create(
         #     user=login_user, thread="XXX", role="user", message=form_data["question"]
