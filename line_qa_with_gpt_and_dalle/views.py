@@ -12,8 +12,9 @@ from openai import OpenAI
 
 from config.settings import BASE_DIR
 from line_qa_with_gpt_and_dalle.domain.service.openai import (
-    ModelTextToSpeechService,
+    # ModelTextToSpeechService,　# TODO: tts用
     MyChatCompletionMessage,
+    ModelGptService,
 )
 from line_qa_with_gpt_and_dalle.forms import UserTextForm
 from line_qa_with_gpt_and_dalle.models import ChatLogsWithLine
@@ -41,19 +42,28 @@ class HomeView(FormView):
         environ.Env.read_env(Path(BASE_DIR, ".env"))
         client = OpenAI(api_key=env("OPENAI_API_KEY"))
 
-        # gpt_service = ModelGptService(client)
         # dalle_service = ModelDalleService(client)
-        tts_service = ModelTextToSpeechService(client)
         # stt_service = ModelSpeechToTextService(client)
 
-        # TODO: tts用なのでfile_pathはありません
+        # TODO: gpt用なのでfile_pathはありません
+        gpt_service = ModelGptService(client)
         my_chat_completion_message = MyChatCompletionMessage(
-            user_id=login_user,
+            user_id=login_user.pk,
             role="user",
             content=form_data["question"],
             invisible=False,
         )
-        tts_service.generate(my_chat_completion_message)
+        gpt_service.generate(my_chat_completion_message, gender="man")
+
+        # # TODO: tts用なのでfile_pathはありません
+        # tts_service = ModelTextToSpeechService(client)
+        # my_chat_completion_message = MyChatCompletionMessage(
+        #     user_id=login_user,
+        #     role="user",
+        #     content=form_data["question"],
+        #     invisible=False,
+        # )
+        # tts_service.generate(my_chat_completion_message)
 
         formatted_answer = 'result["answer"]'
         # ChatLogs.objects.create(
