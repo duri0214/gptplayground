@@ -1,7 +1,7 @@
-import os
 import secrets
 from abc import ABC, abstractmethod
 from io import BytesIO
+from pathlib import Path
 
 import requests.exceptions
 from PIL import Image
@@ -13,6 +13,7 @@ from openai.types.chat import (
     ChatCompletion,
 )
 
+from config.settings import BASE_DIR
 from line_qa_with_gpt_and_dalle.domain.repository.chatlogs import (
     ChatLogsRepository,
 )
@@ -263,9 +264,9 @@ class ModelDalleService(ModelService):
     def save(
         self, picture: Image, my_chat_completion_message: MyChatCompletionMessage
     ) -> MyChatCompletionMessage:
-        folder_path = "app/images"
-        if not os.path.exists(folder_path):
-            os.makedirs(folder_path)
+        folder_path = Path(BASE_DIR) / "images"
+        if not folder_path.exists():
+            folder_path.mkdir(parents=True, exist_ok=True)
         # This generates a random string of 10 characters
         random_string = secrets.token_hex(5)
         my_chat_completion_message.image_url = f"{folder_path}/{random_string}.jpg"
@@ -290,9 +291,9 @@ class ModelTextToSpeechService(ModelService):
         )
 
     def save(self, response, my_chat_completion_message: MyChatCompletionMessage):
-        folder_path = "app/audios"
-        if not os.path.exists(folder_path):
-            os.makedirs(folder_path)
+        folder_path = Path(BASE_DIR) / "audios"
+        if not folder_path.exists():
+            folder_path.mkdir(parents=True, exist_ok=True)
         # This generates a random string of 10 characters
         random_string = secrets.token_hex(5)
         my_chat_completion_message.image_url = f"{folder_path}/{random_string}.mp3"
@@ -304,7 +305,7 @@ class ModelTextToSpeechService(ModelService):
 
 class ModelSpeechToTextService(ModelService):
     def generate(self, my_chat_completion_message: MyChatCompletionMessage):
-        if os.path.exists(my_chat_completion_message.file_path):
+        if Path(my_chat_completion_message.file_path).exists():
             response = self.post_to_gpt(my_chat_completion_message.file_path)
             print(f"\n音声ファイルは「{response.text}」とテキスト化されました\n")
             self.save(my_chat_completion_message)
