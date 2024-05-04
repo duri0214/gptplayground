@@ -129,6 +129,29 @@ class ModelGptService(ModelService):
 
         return chat_history
 
+    def post_to_gpt(
+        self, chat_history: list[MyChatCompletionMessage]
+    ) -> ChatCompletion:
+        return self.client.chat.completions.create(
+            model="gpt-4-turbo",
+            messages=[x.to_origin_param() for x in chat_history],
+            temperature=0.5,
+        )
+
+    def save(
+        self, messages: MyChatCompletionMessage | list[MyChatCompletionMessage]
+    ) -> MyChatCompletionMessage | list[MyChatCompletionMessage]:
+        if isinstance(messages, list):
+            self.chatlogs_repository.bulk_insert(messages)
+        elif isinstance(messages, MyChatCompletionMessage):
+            self.chatlogs_repository.insert(messages)
+        else:
+            raise ValueError(
+                f"Unexpected type {type(messages)}. Expected MyChatCompletionMessage or list[MyChatCompletionMessage]."
+            )
+
+        return messages
+
     def get_chat_history(
         self, user_id: int, gender: Gender
     ) -> list[MyChatCompletionMessage]:
@@ -187,48 +210,6 @@ class ModelGptService(ModelService):
             {{"skill": "コミュニケーション力", "score": 96, "judge": "合格"}}
         """
 
-    def post_to_gpt(
-        self, chat_history: list[MyChatCompletionMessage]
-    ) -> ChatCompletion:
-        return self.client.chat.completions.create(
-            model="gpt-4-turbo",
-            messages=[x.to_origin_param() for x in chat_history],
-            temperature=0.5,
-        )
-
-    def save(
-        self, messages: MyChatCompletionMessage | list[MyChatCompletionMessage]
-    ) -> MyChatCompletionMessage | list[MyChatCompletionMessage]:
-        if isinstance(messages, list):
-            self._bulk_insert_latest_chat_into_the_table(messages)
-        elif isinstance(messages, MyChatCompletionMessage):
-            self._insert_latest_chat_into_the_table(
-                messages.user_id, messages.role, messages.content, messages.invisible
-            )
-        else:
-            raise ValueError(
-                f"Unexpected type {type(messages)}. Expected MyChatCompletionMessage or list[MyChatCompletionMessage]."
-            )
-
-        return messages
-
-    def _insert_latest_chat_into_the_table(
-        self, user_id: int, role: str, content: str, invisible: bool = False
-    ) -> MyChatCompletionMessage:
-        my_chat_completion_message = MyChatCompletionMessage(
-            user_id=user_id, role=role, content=content, invisible=invisible
-        )
-        self.chatlogs_repository.insert(my_chat_completion_message)
-
-        return my_chat_completion_message
-
-    def _bulk_insert_latest_chat_into_the_table(
-        self, my_chat_completion_message_list: list[MyChatCompletionMessage]
-    ) -> list[MyChatCompletionMessage]:
-        self.chatlogs_repository.bulk_insert(my_chat_completion_message_list)
-
-        return my_chat_completion_message_list
-
 
 class ModelDalleService(ModelService):
     def generate(self, user_id: str, prompt: str):
@@ -237,10 +218,6 @@ class ModelDalleService(ModelService):
         dall-e-3: 1024x1024, 1792x1024, 1024x1792 のいずれかしか生成できない
         """
         pass
-
-    @staticmethod
-    def resize(picture: Image) -> Image:
-        return picture.resize((512, 512))
 
     def post_to_gpt(self, xxx: str):
         pass
@@ -254,3 +231,7 @@ class ModelDalleService(ModelService):
         if not os.path.exists(folder_path):
             os.makedirs(folder_path)
         picture.save(f"{folder_path}/{random_string}.jpg")
+
+    @staticmethod
+    def resize(picture: Image) -> Image:
+        return picture.resize((512, 512))
