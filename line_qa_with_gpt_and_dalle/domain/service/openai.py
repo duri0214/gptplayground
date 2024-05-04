@@ -36,7 +36,7 @@ class MyChatCompletionMessage:
         self.invisible = invisible
         self.file_path = file_path
 
-    def to_origin_param(self):
+    def to_origin(self):
         if self.role == "system":
             temp = ChatCompletionSystemMessageParam(role="system", content=self.content)
         elif self.role == "assistant":
@@ -152,7 +152,7 @@ class ModelGptService(ModelService):
     ) -> ChatCompletion:
         return self.client.chat.completions.create(
             model="gpt-4-turbo",
-            messages=[x.to_origin_param() for x in chat_history],
+            messages=[x.to_origin() for x in chat_history],
             temperature=0.5,
         )
 
