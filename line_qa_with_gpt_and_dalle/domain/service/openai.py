@@ -10,7 +10,7 @@ from openai.types.chat import (
     ChatCompletion,
 )
 
-from line_qa_with_gpt_and_dalle.domain.repository.chatlogsrepository import (
+from line_qa_with_gpt_and_dalle.domain.repository.chatlogs import (
     ChatLogsRepository,
 )
 from line_qa_with_gpt_and_dalle.models import ChatLogsWithLine
