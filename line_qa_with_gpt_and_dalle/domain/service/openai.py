@@ -47,9 +47,9 @@ class ModelGptService(ModelService):
             my_chat_completion_message.user_id, Gender(gender)
         )
 
+        # 初回はユーザのボタン押下などのトリガーで「プロンプト」と「なぞなぞスタート」の2行がinsertされる
         # 会話が始まっているならユーザの入力したチャットをinsertしてからChatGPTに全投げする
-        # ユーザのボタン押下で「プロンプト」と「さぁはじめましょう」の2行がinsertされるので
-        # 3以上あれば会話が始まっていると判定することができる
+        # つまり、3以上あれば会話が始まっているだろうとみなせる
         if len(chat_history) > 2:
             chat_history.append(
                 self.save(
@@ -71,7 +71,7 @@ class ModelGptService(ModelService):
         )
         chat_history.append(self.save(latest_assistant))
 
-        if "本日は面接にご参加いただき" in latest_assistant.content:
+        if "本日はなぞなぞにご参加いただき" in latest_assistant.content:
             chat_history.append(
                 self.save(
                     MyChatCompletionMessage(
@@ -145,7 +145,7 @@ class ModelGptService(ModelService):
                 MyChatCompletionMessage(
                     user_id=user_id,
                     role="user",
-                    content="アセスメントスタート",
+                    content="なぞなぞスタート",
                     invisible=False,
                 ),
             ]
@@ -156,26 +156,25 @@ class ModelGptService(ModelService):
     @staticmethod
     def get_prompt(gender: Gender) -> str:
         return f"""
-            あなたは人材派遣会社の面接官です。
+            あなたはなぞなぞコーナーの担当者です。
             
             #制約条件
-            - 会話の前にあいさつをします
-            - 質問1のあとに質問2を行う。質問2が終わったら、感想を述べるとともに「本日は面接にご参加いただき、ありがとうございました。」と言って終わりましょう。判定結果は出力してはいけません
-            - 質問1は「目標設定力」評価します
-            - 質問2は「コミュニケーション力」を評価します
+            - 「なぞなぞスタート」と言われたら質問に移る前に、あいさつをします
+            - 質問1のあとに質問2を行う。質問2が終わったら、感想を述べるとともに「本日はなぞなぞにご参加いただき、ありがとうございました。」と言って終わりましょう。判定結果は出力してはいけません
+            - 質問1は「論理的思考力」評価します
+            - 質問2は「洞察力」を評価します
             - scoreが70を超えたら、judgeが「合格」になる
             - {gender.name} の口調で会話を行う
             - 「評価結果をjsonで出力してください」と入力されたら、判定結果例のように判定結果を出力する
             
             #質問1
-            - 新しいことを学ぶ際、どのような方法を探しますか？
+            - はじめは4本足、途中から2本足、最後は3本足。それは何でしょう？
             
             #質問2
-            - ストレスが溜まったとき、どのように解消しますか？
+            - 私は黒い服を着て、赤い手袋を持っている。夜には立っているが、朝になると寝る。何でしょう？
             
             #判定結果例
-            [{{"skill": "目標設定力", "score": 50, "judge": "不合格"}},
-            {{"skill": "コミュニケーション力", "score": 96, "judge": "合格"}}]
+            [{{"skill": "論理的思考力", "score": 50, "judge": "不合格"}},{{"skill": "洞察力", "score": 96, "judge": "合格"}}]
         """
 
 
