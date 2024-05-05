@@ -17,8 +17,13 @@
                         <h5 class="card-title">{{ chat_log.role }}</h5>
                         <h6 class="card-subtitle mb-2 text-muted">file: {{ chat_log.file_path }}</h6>
                         <p class="card-text">{{ chat_log.content }}</p>
-                        <a href="#" class="card-link">Card link</a>
-                        <a href="#" class="card-link">Another link</a>
+                        {% if chat_log.file_path %}
+                            <img src="{{ chat_log.file_path }}" class="img-fluid" alt="Responsive image">
+                        {% endif %}
+                        <div>
+                            <a href="#" class="card-link">Card link</a>
+                            <a href="#" class="card-link">Another link</a>
+                        </div>
                     </div>
                 </div>
             {% endif %}

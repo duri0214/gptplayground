@@ -10,7 +10,7 @@ from openai.types.chat import (
     ChatCompletion,
 )
 
-from config.settings import STATIC_ROOT
+from config.settings import MEDIA_ROOT
 from line_qa_with_gpt_and_dalle.domain.repository.chatlogs import (
     ChatLogsRepository,
 )
@@ -213,12 +213,12 @@ class ModelDalleService(ModelService):
     def save(
         self, picture: Image, my_chat_completion_message: MyChatCompletionMessage
     ) -> MyChatCompletionMessage:
-        folder_path = Path(STATIC_ROOT) / "images"
+        folder_path = Path(MEDIA_ROOT) / "images"
         if not folder_path.exists():
             folder_path.mkdir(parents=True, exist_ok=True)
         # This generates a random string of 10 characters
         random_filename = secrets.token_hex(5) + ".jpg"
-        relative_path_str = "images/" + random_filename
+        relative_path_str = "/media/images/" + random_filename
         full_path = folder_path / random_filename
         my_chat_completion_message.file_path = relative_path_str
         picture.save(full_path)
@@ -228,7 +228,7 @@ class ModelDalleService(ModelService):
 
     @staticmethod
     def resize(picture: Image) -> Image:
-        return picture.resize((512, 512))
+        return picture.resize((128, 128))
 
 
 class ModelTextToSpeechService(ModelService):
@@ -244,12 +244,12 @@ class ModelTextToSpeechService(ModelService):
         )
 
     def save(self, response, my_chat_completion_message: MyChatCompletionMessage):
-        folder_path = Path(STATIC_ROOT) / "audios"
+        folder_path = Path(MEDIA_ROOT) / "audios"
         if not folder_path.exists():
             folder_path.mkdir(parents=True, exist_ok=True)
         # This generates a random string of 10 characters
         random_filename = secrets.token_hex(5) + ".mp3"
-        relative_path_str = "audios/" + random_filename
+        relative_path_str = "/media/audios/" + random_filename
         full_path = folder_path / random_filename
         my_chat_completion_message.file_path = relative_path_str
         response.write_to_file(full_path)
@@ -262,7 +262,7 @@ class ModelSpeechToTextService(ModelService):
     def generate(self, my_chat_completion_message: MyChatCompletionMessage):
         if my_chat_completion_message.file_path is None:
             raise Exception("file_path is None")
-        full_path = Path(STATIC_ROOT) / my_chat_completion_message.file_path
+        full_path = Path(MEDIA_ROOT) / my_chat_completion_message.file_path
         if full_path.exists():
             response = self.post_to_gpt(str(full_path))
             my_chat_completion_message.content = response.text
