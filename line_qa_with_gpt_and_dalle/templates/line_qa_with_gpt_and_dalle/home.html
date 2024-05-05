@@ -1,5 +1,6 @@
 {% extends 'line_qa_with_gpt_and_dalle/base.html' %}
 {% load static %}
+{% load split_ext %}
 
 {% block content %}
     <div class="container">
@@ -17,8 +18,13 @@
                         <h5 class="card-title">{{ chat_log.role }}</h5>
                         <h6 class="card-subtitle mb-2 text-muted">file: {{ chat_log.file_path }}</h6>
                         <p class="card-text">{{ chat_log.content }}</p>
-                        {% if chat_log.file_path %}
+                        {% if chat_log.file_path|split_ext == "jpg" %}
                             <img src="{{ chat_log.file_path }}" class="img-fluid" alt="Responsive image">
+                        {% elif chat_log.file_path|split_ext == "mp3" %}
+                            <audio controls>
+                                <source src="{{ chat_log.file_path }}" type="audio/mpeg">
+                                Your browser does not support the audio element.
+                            </audio>
                         {% endif %}
                         <div>
                             <a href="#" class="card-link">Card link</a>

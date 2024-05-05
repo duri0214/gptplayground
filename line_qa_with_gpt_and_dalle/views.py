@@ -61,7 +61,7 @@ class HomeView(FormView):
         # TODO: tts用なのでfile_pathはありません
         # tts_service = ModelTextToSpeechService(client)
         # my_chat_completion_message = MyChatCompletionMessage(
-        #     user_id=login_user.pk,
+        #     user_id=login_user,
         #     role="user",
         #     content=form_data["question"],
         #     invisible=False,
