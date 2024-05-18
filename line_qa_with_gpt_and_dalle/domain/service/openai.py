@@ -11,8 +11,8 @@ from openai.types.chat import (
 )
 
 from config.settings import MEDIA_ROOT
-from line_qa_with_gpt_and_dalle.domain.repository.chatlogs import (
-    ChatLogsRepository,
+from line_qa_with_gpt_and_dalle.domain.repository.chatlog import (
+    ChatLogRepository,
 )
 from line_qa_with_gpt_and_dalle.domain.valueobject.chat import MyChatCompletionMessage
 from line_qa_with_gpt_and_dalle.domain.valueobject.gender import Gender
@@ -20,7 +20,7 @@ from line_qa_with_gpt_and_dalle.domain.valueobject.gender import Gender
 
 class ModelService(ABC):
     def __init__(self, client: OpenAI):
-        self.chatlogs_repository = ChatLogsRepository()
+        self.chatlog_repository = ChatLogRepository()
         self.client = client
 
     @abstractmethod
@@ -107,9 +107,9 @@ class ModelGptService(ModelService):
         self, messages: MyChatCompletionMessage | list[MyChatCompletionMessage]
     ) -> MyChatCompletionMessage | list[MyChatCompletionMessage]:
         if isinstance(messages, list):
-            self.chatlogs_repository.bulk_insert(messages)
+            self.chatlog_repository.bulk_insert(messages)
         elif isinstance(messages, MyChatCompletionMessage):
-            self.chatlogs_repository.insert(messages)
+            self.chatlog_repository.insert(messages)
         else:
             raise ValueError(
                 f"Unexpected type {type(messages)}. Expected MyChatCompletionMessage or list[MyChatCompletionMessage]."
@@ -120,19 +120,19 @@ class ModelGptService(ModelService):
     def get_chat_history(
         self, user_id: int, gender: Gender
     ) -> list[MyChatCompletionMessage]:
-        chatlogs_list = self.chatlogs_repository.find_chatlogs_by_user_id(user_id)
+        chatlog_list = self.chatlog_repository.find_chatlog_by_user_id(user_id)
 
-        if chatlogs_list:
+        if chatlog_list:
             history = [
                 MyChatCompletionMessage(
-                    pk=chatlogs.pk,
-                    user_id=int(chatlogs.user_id),
-                    role=chatlogs.role,
-                    content=chatlogs.content,
+                    pk=chatlog.pk,
+                    user_id=int(chatlog.user_id),
+                    role=chatlog.role,
+                    content=chatlog.content,
                     invisible=False,
-                    file_path=chatlogs.file_path,
+                    file_path=chatlog.file_path,
                 )
-                for chatlogs in chatlogs_list
+                for chatlog in chatlog_list
             ]
         else:
             history = [
@@ -222,7 +222,7 @@ class ModelDalleService(ModelService):
         full_path = folder_path / random_filename
         my_chat_completion_message.file_path = relative_path_str
         picture.save(full_path)
-        self.chatlogs_repository.upsert(my_chat_completion_message)
+        self.chatlog_repository.upsert(my_chat_completion_message)
 
         return my_chat_completion_message
 
@@ -253,7 +253,7 @@ class ModelTextToSpeechService(ModelService):
         full_path = folder_path / random_filename
         my_chat_completion_message.file_path = relative_path_str
         response.write_to_file(full_path)
-        self.chatlogs_repository.upsert(my_chat_completion_message)
+        self.chatlog_repository.upsert(my_chat_completion_message)
 
         return my_chat_completion_message
 
@@ -276,4 +276,4 @@ class ModelSpeechToTextService(ModelService):
         return self.client.audio.transcriptions.create(model="whisper-1", file=audio)
 
     def save(self, my_chat_completion_message: MyChatCompletionMessage):
-        self.chatlogs_repository.upsert(my_chat_completion_message)
+        self.chatlog_repository.upsert(my_chat_completion_message)

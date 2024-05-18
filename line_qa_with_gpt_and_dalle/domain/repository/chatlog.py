@@ -2,13 +2,16 @@ from line_qa_with_gpt_and_dalle.domain.valueobject.chat import MyChatCompletionM
 from line_qa_with_gpt_and_dalle.models import ChatLogsWithLine
 
 
-class ChatLogsRepository:
+class ChatLogRepository:
+    def __init__(self):
+        pass
+
     @staticmethod
-    def find_chatlogs_by_id(pk: int) -> list[ChatLogsWithLine]:
+    def find_chatlog_by_id(pk: int) -> list[ChatLogsWithLine]:
         return ChatLogsWithLine.objects.get(pk=pk)
 
     @staticmethod
-    def find_chatlogs_by_user_id(user_id: int) -> list[ChatLogsWithLine]:
+    def find_chatlog_by_user_id(user_id: int) -> list[ChatLogsWithLine]:
         return ChatLogsWithLine.objects.filter(user_id=user_id)
 
     @staticmethod
