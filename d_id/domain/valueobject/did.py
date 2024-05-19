@@ -2,12 +2,12 @@ import requests
 
 
 class DidResponseData:
-    class Offer:
+    class _Offer:
         def __init__(self, offer_data: dict):
             self.type = offer_data.get("type")
             self.sdp = offer_data.get("sdp")
 
-    class IceServer:
+    class _IceServer:
         def __init__(self, ice_server_data: dict):
             self.urls = ice_server_data.get("urls")
             if isinstance(self.urls, str):
