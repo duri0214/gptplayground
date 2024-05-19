@@ -1,9 +1,8 @@
-import os
-
 from django.shortcuts import render
 from django.urls import reverse_lazy
 from django.views.generic import FormView
 
+from d_id.domain.service.did_service import DidService
 from line_qa_with_gpt_and_dalle.forms import UserTextForm
 
 
@@ -16,17 +15,18 @@ class HomeView(FormView):
         form_data = form.cleaned_data
         print(f"question: {form_data['question']}")
 
+        source_url = (
+            "https://www.henojiya.net/static/vietnam_research/chart/nobunaga.png"
+        )
+        did_service = DidService(source_url)
+        stream = did_service.create_new_stream()
+        print(stream)
+
         # to d-id payload
         payload = {
             "script": {"type": "text", "input": form_data["question"]},
             "source_url": "https://create=images-results.d-id.com/DefaultPresenters/Noelle_f/image.jpeg",
             # "webhook":
-        }
-
-        url = "https://api.d-id.com/talks/streams"
-        headers = {
-            "Authorization": f"Basic {os.environ.get('DID_PUBLIC_KEY')}",
-            "Content-Type": "application/json",
         }
 
         # env = environ.Env()
