@@ -25,6 +25,8 @@ class DidResponseData:
             raise Exception("不正なリクエストです。資格情報を確認してください。")
         response_data = response.json()
         self.id = response_data.get("id")
-        self.offer = self.Offer(response_data.get("offer"))
-        self.ice_servers = [self.IceServer(x) for x in response_data.get("ice_servers")]
+        self.offer = self._Offer(response_data.get("offer"))
+        self.ice_servers = [
+            self._IceServer(x) for x in response_data.get("ice_servers")
+        ]
         self.session_id = response_data.get("session_id")
