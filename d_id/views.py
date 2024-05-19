@@ -19,8 +19,8 @@ class HomeView(FormView):
             "https://www.henojiya.net/static/vietnam_research/chart/nobunaga.png"
         )
         did_service = DidService(source_url)
-        stream = did_service.create_new_stream()
-        print(stream)
+        stream = did_service.create_stream()
+        print(stream.id, stream.offer.type, stream.offer.sdp)
 
         # to d-id payload
         payload = {

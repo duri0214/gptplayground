@@ -9,7 +9,7 @@ class DidService:
     def __init__(self, source_url: str):
         self.source_url = source_url
 
-    def create_new_stream(self):
+    def create_stream(self):
         url = "https://api.d-id.com/talks/streams"
 
         payload = {
