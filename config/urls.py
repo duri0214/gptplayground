@@ -24,5 +24,6 @@ from config import settings
 urlpatterns = [
     path("retrieval_qa_with_source/", include("retrieval_qa_with_source.urls")),
     path("line_qa_with_gpt_and_dalle/", include("line_qa_with_gpt_and_dalle.urls")),
+    path("d_id/", include("d_id.urls")),
     path("admin/", admin.site.urls),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
