@@ -1,6 +1,8 @@
+import os
 from dataclasses import asdict
 
 import requests
+from dotenv import load_dotenv
 
 from retrieval_qa_with_source.domain.valueobject.estate import (
     EstateRequest,
@@ -14,11 +16,17 @@ from retrieval_qa_with_source.domain.valueobject.estate import (
     SchoolDistrict,
 )
 
+# .env ファイルを読み込む
+load_dotenv()
+
 
 class EstateService:
-    def __init__(self, url: str, api_key: str):
+    def __init__(self, url: str):
+        self.api_key = os.getenv("ESTATE_API_KEY")
+        if not self.api_key:
+            raise ValueError("ESTATE_API_KEY is not set or is empty.")
+
         self.url = url
-        self.api_key = api_key
         self.headers = {
             "Content-Type": "application/json",
             "Accept": "application/json",
@@ -93,8 +101,7 @@ class EstateService:
 
 if __name__ == "__main__":
     service = EstateService(
-        url="https://ty665ls8s5.execute-api.ap-northeast-1.amazonaws.com/prod/get-estate-info",
-        api_key="BxRsB#cd9~$E",
+        url="https://ty665ls8s5.execute-api.ap-northeast-1.amazonaws.com/prod/get-estate-info"
     )
-    result = service.post_estate_info(latitude=35.652832, longitude=139.828491)
+    result = service.post_estate_info(latitude=35.662832, longitude=139.828491)
     print(result)
