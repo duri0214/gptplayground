@@ -30,7 +30,7 @@ class EstateService:
 
 if __name__ == "__main__":
     service = EstateService(
-        url="https://ty665ls8s5.execute-api.ap-northeast-1.amazonaws.com/prod/get-estate-additional-info",
+        url="https://ty665ls8s5.execute-api.ap-northeast-1.amazonaws.com/prod/get-estate-info",
         api_key="BxRsB#cd9~$E",
     )
     result = service.post_estate_info(latitude=35.652832, longitude=139.828491)
