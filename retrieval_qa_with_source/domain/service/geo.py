@@ -95,20 +95,19 @@ class GeoService:
             return dataset.read(band_index)
 
     @staticmethod
-    def get_value_by_latlon(file_path: str, lon: float, lat: float) -> float:
+    def get_value_by_coords(file_path: str, coords: GoogleMapCoords) -> float:
         """
         緯度経度を指定してピンポイントの値を取得する。
 
         Args:
             file_path (str): GeoTIFFファイルのパス。
-            lon (float): 経度。
-            lat (float): 緯度。
+            coords (GoogleMapCoords): 緯度経度。
 
         Returns:
             float: 指定した位置の値。
         """
         with rasterio.open(file_path) as dataset:
-            py, px = dataset.index(lon, lat)
+            py, px = dataset.index(coords.longitude, coords.latitude)
             return dataset.read(1)[py, px]
 
     @staticmethod
@@ -137,39 +136,43 @@ class GeoService:
 
 # サンプル利用
 if __name__ == "__main__":
-    file_path = "sample_geo_picture.tif"  # GeoTIFFファイルのパス
+    target_file_path = "sample_geo_picture.tif"  # GeoTIFFファイルのパス
 
     geo_service = GeoService()
 
     # メタデータを取得して表示
-    metadata_vo = geo_service.read_metadata(file_path)
+    metadata_vo = geo_service.read_metadata(target_file_path)
     print("Metadata:", metadata_vo)
 
     # 画像の中央ピクセルの緯度経度を取得して表示
-    center_coords = geo_service.get_center_coordinates(file_path)
+    center_coords = geo_service.get_center_coordinates(target_file_path)
     print(
         f"Center Latitude: {center_coords.latitude}, Center Longitude: {center_coords.longitude}"
     )
 
     # 任意のピクセル位置(例えばピクセル位置 (100, 150)) の緯度経度を取得して表示
-    pixel_coords = geo_service.get_pixel_coordinates(file_path, 100, 150)
+    pixel_coords = geo_service.get_pixel_coordinates(target_file_path, 100, 150)
     print(f"Latitude: {pixel_coords.latitude}, Longitude: {pixel_coords.longitude}")
 
     # 指定されたバンドを numpy 配列として読み込んで表示
-    band_array = geo_service.read_band_as_array(file_path, band_index=1)
+    band_array = geo_service.read_band_as_array(target_file_path, band_index=1)
     print("Band Array Shape:", band_array.shape)
 
     # 緯度経度を指定してピクセル値を取得して表示
-    lon, lat = 136.902589, 37.391049  # 例: 任意の緯度経度
-    value = geo_service.get_value_by_latlon(file_path, lon, lat)
-    print(f"Value at ({lat}, {lon}): {value}")
+    target_coords = GoogleMapCoords(
+        latitude=37.391049, longitude=136.902589
+    )  # 任意の緯度経度
+    value = geo_service.get_value_by_coords(target_file_path, target_coords)
+    print(f"Value at ({target_coords.latitude}, {target_coords.longitude}): {value}")
 
     # 緯度経度範囲を指定して画像を切り取る
+    target_coords = [
+        GoogleMapCoords(latitude=37.389831, longitude=136.902589),  # 左下（西南）
+        GoogleMapCoords(latitude=37.391049, longitude=136.904030),  # 右上（北東）
+    ]
     cropped_data = geo_service.crop_by_bbox(
-        file_path,
-        min_coords=GoogleMapCoords(
-            latitude=37.389831, longitude=136.902589
-        ),  # 左下（西南）
-        max_coords=GoogleMapCoords(latitude=37.391049, longitude=136.904030),
-    )  # 右上（北東）
+        file_path=target_file_path,
+        min_coords=target_coords[0],
+        max_coords=target_coords[1],
+    )
     print("Cropped Data Shape:", cropped_data.shape)
