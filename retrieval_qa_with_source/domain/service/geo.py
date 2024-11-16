@@ -165,11 +165,11 @@ if __name__ == "__main__":
     print(f"Value at ({lat}, {lon}): {value}")
 
     # 緯度経度範囲を指定して画像を切り取る
-    min_coords = GoogleMapCoords(
-        latitude=37.389831, longitude=136.902589
-    )  # 左下（西南）
-    max_coords = GoogleMapCoords(
-        latitude=37.391049, longitude=136.904030
+    cropped_data = geo_service.crop_by_bbox(
+        file_path,
+        min_coords=GoogleMapCoords(
+            latitude=37.389831, longitude=136.902589
+        ),  # 左下（西南）
+        max_coords=GoogleMapCoords(latitude=37.391049, longitude=136.904030),
     )  # 右上（北東）
-    cropped_data = geo_service.crop_by_bbox(file_path, min_coords, max_coords)
     print("Cropped Data Shape:", cropped_data.shape)
