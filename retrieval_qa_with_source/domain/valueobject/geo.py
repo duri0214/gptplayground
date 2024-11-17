@@ -35,23 +35,39 @@ class MetaData:
 
 
 class BaseCoords(ABC):
-    @abstractmethod
-    def get_coords(self, to_str: bool = False) -> tuple[float, float] | str:
-        pass
+    """
+    座標を表すベースクラス。緯度と経度を持つ。
 
+    メソッド:
+    get_coords : 座標を取得します。戻り値の形式を指定することもできます。
 
-class GoogleMapCoords(BaseCoords):
+    抽象メソッド:
+    get_coords
+    """
+
     def __init__(self, latitude: float, longitude: float):
         """
-        googlemap は 緯度経度(lat, lng) で作成する
+        BaseCoords クラスのインスタンスを生成します。
+
+        パラメータ:
+        latitude (float): 緯度
+        longitude (float): 経度
         """
         self.latitude = latitude
         self.longitude = longitude
 
-    def get_coords(self, to_str: bool = False) -> tuple[float, float] or str:
-        """
-        :return: latitude, longitude
-        """
-        coordinates_tuple = self.latitude, self.longitude
-        coordinates_str = f"{coordinates_tuple[0]}, {coordinates_tuple[1]}"
-        return coordinates_tuple if to_str is False else coordinates_str
+    @abstractmethod
+    def to_tuple(self) -> tuple[float, float]:
+        pass
+
+    @abstractmethod
+    def to_str(self) -> str:
+        pass
+
+
+class GoogleMapCoords(BaseCoords):
+    def to_tuple(self) -> tuple[float, float]:
+        return self.latitude, self.longitude
+
+    def to_str(self) -> str:
+        return f"{self.latitude}, {self.longitude}"
