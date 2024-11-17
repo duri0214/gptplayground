@@ -35,37 +35,40 @@ class MetaData:
 
 
 class BaseCoords(ABC):
-    """
-    座標を表すベースクラス。緯度と経度を持つ。
-
-    メソッド:
-    get_coords : 座標を取得します。戻り値の形式を指定することもできます。
-
-    抽象メソッド:
-    get_coords
-    """
-
     def __init__(self, latitude: float, longitude: float):
-        """
-        BaseCoords クラスのインスタンスを生成します。
-
-        パラメータ:
-        latitude (float): 緯度
-        longitude (float): 経度
-        """
         self.latitude = latitude
         self.longitude = longitude
 
     @abstractmethod
     def to_tuple(self) -> tuple[float, float]:
+        """
+        座標をタプル形式で取得します。緯度経度の順に配置されます。
+
+        Returns:
+            tuple[float, float]: (Latitude, Longitude)
+        """
         pass
 
     @abstractmethod
     def to_str(self) -> str:
+        """
+        座標を文字列形式で取得します。緯度経度はコンマで区切られます。
+
+        Returns:
+            str: "Latitude, Longitude"
+        """
         pass
 
 
 class GoogleMapCoords(BaseCoords):
+    """
+    Google Map 用の座標変換クラス。BaseCoordsを継承します。
+
+    メソッド:
+    to_tuple: 座標をタプル形式で取得します。戻り値は (緯度,経度) 法です。
+    to_str : 座標を文字列形式で取得します。戻り値は "緯度, 経度" 形式です。
+    """
+
     def to_tuple(self) -> tuple[float, float]:
         return self.latitude, self.longitude
 
