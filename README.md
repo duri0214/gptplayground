@@ -20,7 +20,7 @@ pip freeze > requirements.txt
 pk=1のユーザーを使用するので createsuperuser でユーザーを作ってから runserver してください
 
 ```
-python manage.py makemigrations retrieval_qa_with_source line_qa_with_gpt_and_dalle d_id
+python manage.py makemigrations retrieval_qa_with_source line_qa_with_gpt_and_dalle
 python manage.py migrate
 python manage.py collectstatic
 
