@@ -1,3 +1,5 @@
+import os
+
 import numpy as np
 import rasterio
 from rasterio.windows import Window
@@ -133,6 +135,59 @@ class GeoService:
             window = Window.from_slices((py2, py + 1), (px, px2 + 1))
             return src.read(1, window=window)
 
+    @staticmethod
+    def rescale_and_save(file_path: str, brightness_factor: float = 1.0) -> None:
+        """
+        GeoTIFFファイルのデータを0～255にリスケールし、明るさを調整して保存する。
+        保存時のファイル名は元ファイル名に '_rescaled' を付加する。
+
+        Args:
+            file_path (str): 入力GeoTIFFファイルのパス。
+            brightness_factor (float): 明るさ調整係数（1.0でそのまま、値が大きいほど明るくなる）。
+        """
+
+        def rescale_data(data: np.ndarray, scale_factor: float) -> np.ndarray:
+            """
+            内部メソッド: データを0～255にリスケールし、明るさを調整する。
+
+            Args:
+                data (np.ndarray): 入力データ。
+                scale_factor (float): 明るさ調整係数。
+
+            Returns:
+                np.ndarray: リスケールされたデータ。
+            """
+            data_min, data_max = np.percentile(
+                data, [2, 98]
+            )  # 上下2%をクリップしてリスケール
+            rescaled = (data - data_min) / (data_max - data_min) * 255 * scale_factor
+            rescaled = np.clip(rescaled, 0, 255)  # 値を0～255に制限
+            return rescaled.astype(np.uint8)
+
+        # 出力ファイル名を生成
+        base_name, ext = os.path.splitext(file_path)
+        output_path = f"{base_name}_rescaled{ext}"
+
+        with rasterio.open(file_path) as dataset:
+            # データの読み込み
+            rescaled_data = rescale_data(
+                data=dataset.read(1), scale_factor=brightness_factor
+            )
+
+            # メタデータの更新
+            meta = dataset.meta.copy()
+            meta.update(
+                dtype="uint8", photometric="MINISBLACK"
+            )  # グレースケール設定を追加
+
+            # リスケール後のデータを新しいファイルに保存
+            with rasterio.open(output_path, "w", **meta) as dst:
+                dst.write(rescaled_data, 1)
+
+        print(
+            f"Rescaled GeoTIFF file saved as {output_path} with grayscale adjustment."
+        )
+
 
 # サンプル利用
 if __name__ == "__main__":
@@ -176,3 +231,6 @@ if __name__ == "__main__":
         max_coords=target_coords[1],
     )
     print("Cropped Data Shape:", cropped_data.shape)
+
+    # 真っ黒写真回避｜GeoTIFFファイルのデータをリスケールして保存する
+    geo_service.rescale_and_save(file_path=target_file_path)
