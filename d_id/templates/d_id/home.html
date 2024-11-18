@@ -1,0 +1,24 @@
+{% extends 'd_id/base.html' %}
+{% load static %}
+{% load split_ext %}
+
+{% block content %}
+    <div class="container">
+        <div class="jumbotron">
+            <h1 class="display-4">D_ID with ChatGPT4</h1>
+            <p class="lead">The system that forms the basis of work</p>
+            <hr class="my-4">
+            <p>You can talk with ChatGPT4 and D_ID.</p>
+        </div>
+
+        <p>{{ question }}</p>
+        <form action="{% url 'd_id:home' %}" method="POST">
+            {{ form }}
+            {% csrf_token %}
+            <input class="mt-3" type="submit" value="送信">
+        </form>
+    </div>
+    <script type="text/javascript">
+        window.scrollTo(0, document.body.scrollHeight);
+    </script>
+{% endblock %}
