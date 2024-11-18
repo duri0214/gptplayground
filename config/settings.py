@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "retrieval_qa_with_source",
+    "line_qa_with_gpt_and_dalle",
 ]
 
 MIDDLEWARE = [
