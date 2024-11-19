@@ -1,18 +1,18 @@
 import json
-from pathlib import Path
 
-import environ
 from django.contrib.auth.models import User
 from django.http import HttpResponse
 from django.urls import reverse_lazy
 from django.views import View
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import FormView
-from openai import OpenAI
+from dotenv import load_dotenv
 
-from config.settings import BASE_DIR
 from line_qa_with_gpt_and_dalle.forms import UserTextForm
 from line_qa_with_gpt_and_dalle.models import ChatLogsWithLine
+
+# .env ファイルを読み込む
+load_dotenv()
 
 
 class HomeView(FormView):
@@ -33,9 +33,6 @@ class HomeView(FormView):
         form_data = form.cleaned_data
         login_user = User.objects.get(pk=1)  # TODO: request.user.id
 
-        env = environ.Env()
-        environ.Env.read_env(Path(BASE_DIR, ".env"))
-        client = OpenAI(api_key=env("OPENAI_API_KEY"))
 
         # TODO: gpt用なのでfile_pathはありません
         # gpt_service = ModelGptService(client)
