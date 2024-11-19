@@ -1,3 +1,4 @@
+import os
 import secrets
 from abc import ABC, abstractmethod
 from io import BytesIO
@@ -18,10 +19,9 @@ from line_qa_with_gpt_and_dalle.domain.valueobject.chat import MyChatCompletionM
 from line_qa_with_gpt_and_dalle.domain.valueobject.gender import Gender
 
 
-class ModelService(ABC):
-    def __init__(self, client: OpenAI):
+class LLMService(ABC):
+    def __init__(self):
         self.chatlog_repository = ChatLogRepository()
-        self.client = client
 
     @abstractmethod
     def generate(self, **kwargs):
@@ -36,7 +36,11 @@ class ModelService(ABC):
         pass
 
 
-class ModelGptService(ModelService):
+class OpenAIGptService(LLMService):
+    def __init__(self):
+        super().__init__()
+        self.client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
     def generate(
         self, my_chat_completion_message: MyChatCompletionMessage, gender: str
     ) -> list[MyChatCompletionMessage]:
@@ -178,7 +182,11 @@ class ModelGptService(ModelService):
         """
 
 
-class ModelDalleService(ModelService):
+class OpenAIDalleService(LLMService):
+    def __init__(self):
+        super().__init__()
+        self.client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
     def generate(self, my_chat_completion_message: MyChatCompletionMessage):
         """
         画像urlの有効期限は1時間。それ以上使いたいときは保存する。
@@ -231,7 +239,11 @@ class ModelDalleService(ModelService):
         return picture.resize((128, 128))
 
 
-class ModelTextToSpeechService(ModelService):
+class OpenAITextToSpeechService(LLMService):
+    def __init__(self):
+        super().__init__()
+        self.client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
     def generate(self, my_chat_completion_message: MyChatCompletionMessage):
         if my_chat_completion_message.content is None:
             raise Exception("content is None")
@@ -258,7 +270,11 @@ class ModelTextToSpeechService(ModelService):
         return my_chat_completion_message
 
 
-class ModelSpeechToTextService(ModelService):
+class OpenAISpeechToTextService(LLMService):
+    def __init__(self):
+        super().__init__()
+        self.client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
     def generate(self, my_chat_completion_message: MyChatCompletionMessage):
         if my_chat_completion_message.file_path is None:
             raise Exception("file_path is None")
