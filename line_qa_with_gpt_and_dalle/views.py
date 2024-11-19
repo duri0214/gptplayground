@@ -34,46 +34,58 @@ class HomeView(FormView):
         login_user = User.objects.get(pk=1)  # TODO: request.user.id
 
 
-        # TODO: gpt用なのでfile_pathはありません
-        # gpt_service = ModelGptService(client)
+        # OpenAI
+        # Gptに投げるのは role: user のセリフです。Questionは何を入れてもいい
+        # llm_service = OpenAIGptService()
         # my_chat_completion_message = MyChatCompletionMessage(
         #     user_id=login_user.pk,
         #     role="user",
         #     content=form_data["question"],
         #     invisible=False,
         # )
-        # gpt_service.generate(my_chat_completion_message, gender="man")
+        # llm_service.generate(my_chat_completion_message, gender="man")
 
-        # TODO: 絵にするのはassistantが回答する前の「role: userのセリフ」です
-        #  ただし、gpt_serviceの中で呼べば難しくはなさそう
-        # dalle_service = ModelDalleService(client)
+        # Dalleに投げるのは role: user のセリフです
+        # llm_service = OpenAIDalleService()
         # my_chat_completion_message = MyChatCompletionMessage(
         #     user_id=login_user,
         #     role="user",
         #     content=form_data["question"],
         #     invisible=False,
         # )
-        # dalle_service.generate(my_chat_completion_message)
+        # llm_service.generate(my_chat_completion_message)
 
-        # TODO: tts用なのでfile_pathはありません
-        # tts_service = ModelTextToSpeechService(client)
+        # ttsに投げるのは role: user のセリフです
+        # llm_service = OpenAITextToSpeechService()
         # my_chat_completion_message = MyChatCompletionMessage(
         #     user_id=login_user,
         #     role="user",
         #     content=form_data["question"],
         #     invisible=False,
         # )
-        # tts_service.generate(my_chat_completion_message)
+        # llm_service.generate(my_chat_completion_message)
 
-        # TODO: stt用なのでcontentはありません
-        # stt_service = ModelSpeechToTextService(client)
+        # ttsに投げるのは直近の role: user のセリフです。Questionは何を入れてもいい
+        # record = ChatLogsWithLine.objects.filter(
+        #     Q(user=login_user)
+        #     & Q(role="user")
+        #     & Q(file_path__endswith=".mp3")
+        #     & Q(invisible=False)
+        # ).last()
+        # if record is None:
+        #     raise ObjectDoesNotExist("No audio file registered for the user")
+        # llm_service = OpenAISpeechToTextService()
         # my_chat_completion_message = MyChatCompletionMessage(
-        #     user_id=login_user,
-        #     role="user",
-        #     file_path="audios/53f86c30db.mp3",
-        #     invisible=False,
+        #     pk=record.pk,
+        #     user_id=record.user,
+        #     role=record.role,
+        #     content=record.content,
+        #     file_path=str(
+        #         Path(settings.MEDIA_ROOT) / my_chat_completion_message.file_path
+        #     ),  # TODO: ちょっとファイルが見つけられないバグがある issue7
+        #     invisible=record.invisible,
         # )
-        # stt_service.generate(my_chat_completion_message)
+        # llm_service.generate(my_chat_completion_message)
 
         return super().form_valid(form)
 
