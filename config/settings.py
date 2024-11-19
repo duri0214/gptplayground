@@ -10,18 +10,19 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
+import os
 from pathlib import Path
 
-import environ
+from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# read at .env
-env = environ.Env(DEBUG=(bool, False))
-environ.Env.read_env(Path(BASE_DIR, ".env"))
-DEBUG = env("DEBUG")  # read DEBUG at .env
-SECRET_KEY = env("SECRET_KEY")  # read SECRET_KEY at .env
+# .env ファイルを読み込む
+load_dotenv()
+
+DEBUG = os.getenv("DEBUG")  # read DEBUG at .env
+SECRET_KEY = os.getenv("SECRET_KEY")  # read SECRET_KEY at .env
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
@@ -78,10 +79,10 @@ WSGI_APPLICATION = "config.wsgi.application"
 
 DATABASES = {
     "default": {
-        "ENGINE": env("DB_ENGINE"),
-        "NAME": env("DB_NAME"),
-        "USER": env("DB_USER"),
-        "PASSWORD": env("DB_PASSWORD"),
+        "ENGINE": os.getenv("DB_ENGINE"),
+        "NAME": os.getenv("DB_NAME"),
+        "USER": os.getenv("DB_USER"),
+        "PASSWORD": os.getenv("DB_PASSWORD"),
         "HOST": "localhost",
         "PORT": "3306",
     }
