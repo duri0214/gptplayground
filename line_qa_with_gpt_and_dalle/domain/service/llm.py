@@ -19,6 +19,68 @@ from line_qa_with_gpt_and_dalle.domain.valueobject.chat import MyChatCompletionM
 from line_qa_with_gpt_and_dalle.domain.valueobject.gender import Gender
 
 
+def get_stored_chat_history(
+    user_id: int, chatlog_repository: ChatLogRepository
+) -> list[MyChatCompletionMessage]:
+    chatlog_list = chatlog_repository.find_chatlog_by_user_id(user_id)
+    history = [
+        MyChatCompletionMessage(
+            pk=chatlog.pk,
+            user_id=int(chatlog.user_id),
+            role=chatlog.role,
+            content=chatlog.content,
+            invisible=False,
+            file_path=chatlog.file_path,
+        )
+        for chatlog in chatlog_list
+    ]
+    return history
+
+
+def get_prompt(gender: Gender) -> str:
+    return f"""
+        あなたはなぞなぞコーナーの担当者です。
+
+        #制約条件
+        - 「なぞなぞスタート」と言われたら質問に移る前に、あいさつをします
+        - 質問1のあとに質問2を行う。質問2が終わったら、感想を述べるとともに「本日はなぞなぞにご参加いただき、ありがとうございました。」と言って終わりましょう。判定結果は出力してはいけません
+        - 質問1は「論理的思考力」評価します
+        - 質問2は「洞察力」を評価します
+        - scoreが70を超えたら、judgeが「合格」になる
+        - {gender.name} の口調で会話を行う
+        - 「評価結果をjsonで出力してください」と入力されたら、判定結果例のように判定結果を出力する
+
+        #質問1
+        - はじめは4本足、途中から2本足、最後は3本足。それは何でしょう？
+
+        #質問2
+        - 私は黒い服を着て、赤い手袋を持っている。夜には立っているが、朝になると寝る。何でしょう？
+
+        #判定結果例
+        [{{"skill": "論理的思考力", "score": 50, "judge": "不合格"}},{{"skill": "洞察力", "score": 96, "judge": "合格"}}]
+    """
+
+
+def create_initial_prompt(
+    user_id: int, gender: Gender
+) -> list[MyChatCompletionMessage]:
+    history = [
+        MyChatCompletionMessage(
+            user_id=user_id,
+            role="system",
+            content=get_prompt(gender),
+            invisible=True,
+        ),
+        MyChatCompletionMessage(
+            user_id=user_id,
+            role="user",
+            content="なぞなぞスタート",
+            invisible=False,
+        ),
+    ]
+    return history
+
+
 class LLMService(ABC):
     def __init__(self):
         self.chatlog_repository = ChatLogRepository()
@@ -47,9 +109,15 @@ class OpenAIGptService(LLMService):
         if my_chat_completion_message.content is None:
             raise Exception("content is None")
 
-        chat_history = self.get_chat_history(
-            my_chat_completion_message.user_id, Gender(gender)
+        chat_history = get_stored_chat_history(
+            user_id=my_chat_completion_message.user_id,
+            chatlog_repository=self.chatlog_repository,
         )
+        if not chat_history:
+            chat_history = create_initial_prompt(
+                user_id=my_chat_completion_message.user_id, gender=Gender(gender)
+            )
+            self.save(chat_history)
 
         # 初回はユーザのボタン押下などのトリガーで「プロンプト」と「なぞなぞスタート」の2行がinsertされる
         # 会話が始まっているならユーザの入力したチャットをinsertしてからChatGPTに全投げする
@@ -120,66 +188,6 @@ class OpenAIGptService(LLMService):
             )
 
         return messages
-
-    def get_chat_history(
-        self, user_id: int, gender: Gender
-    ) -> list[MyChatCompletionMessage]:
-        chatlog_list = self.chatlog_repository.find_chatlog_by_user_id(user_id)
-
-        if chatlog_list:
-            history = [
-                MyChatCompletionMessage(
-                    pk=chatlog.pk,
-                    user_id=int(chatlog.user_id),
-                    role=chatlog.role,
-                    content=chatlog.content,
-                    invisible=False,
-                    file_path=chatlog.file_path,
-                )
-                for chatlog in chatlog_list
-            ]
-        else:
-            history = [
-                MyChatCompletionMessage(
-                    user_id=user_id,
-                    role="system",
-                    content=self.get_prompt(gender),
-                    invisible=True,
-                ),
-                MyChatCompletionMessage(
-                    user_id=user_id,
-                    role="user",
-                    content="なぞなぞスタート",
-                    invisible=False,
-                ),
-            ]
-            self.save(history)
-
-        return history
-
-    @staticmethod
-    def get_prompt(gender: Gender) -> str:
-        return f"""
-            あなたはなぞなぞコーナーの担当者です。
-            
-            #制約条件
-            - 「なぞなぞスタート」と言われたら質問に移る前に、あいさつをします
-            - 質問1のあとに質問2を行う。質問2が終わったら、感想を述べるとともに「本日はなぞなぞにご参加いただき、ありがとうございました。」と言って終わりましょう。判定結果は出力してはいけません
-            - 質問1は「論理的思考力」評価します
-            - 質問2は「洞察力」を評価します
-            - scoreが70を超えたら、judgeが「合格」になる
-            - {gender.name} の口調で会話を行う
-            - 「評価結果をjsonで出力してください」と入力されたら、判定結果例のように判定結果を出力する
-            
-            #質問1
-            - はじめは4本足、途中から2本足、最後は3本足。それは何でしょう？
-            
-            #質問2
-            - 私は黒い服を着て、赤い手袋を持っている。夜には立っているが、朝になると寝る。何でしょう？
-            
-            #判定結果例
-            [{{"skill": "論理的思考力", "score": 50, "judge": "不合格"}},{{"skill": "洞察力", "score": 96, "judge": "合格"}}]
-        """
 
 
 class OpenAIDalleService(LLMService):
