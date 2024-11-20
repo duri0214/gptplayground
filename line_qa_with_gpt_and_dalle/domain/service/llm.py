@@ -6,6 +6,8 @@ from pathlib import Path
 
 import requests.exceptions
 from PIL import Image
+from google import generativeai
+from google.generativeai.types import GenerateContentResponse
 from openai import OpenAI
 from openai.types.chat import (
     ChatCompletion,
@@ -96,6 +98,66 @@ class LLMService(ABC):
     @abstractmethod
     def save(self, **kwargs):
         pass
+
+
+class GeminiService(LLMService):
+    def __init__(self):
+        super().__init__()
+
+    def generate(
+        self, my_chat_completion_message: MyChatCompletionMessage, gender: str
+    ) -> list[MyChatCompletionMessage]:
+        if my_chat_completion_message.content is None:
+            raise Exception("content is None")
+
+        chat_history = get_stored_chat_history(
+            user_id=my_chat_completion_message.user_id,
+            chatlog_repository=self.chatlog_repository,
+        )
+        chat_history.append(
+            self.save(
+                MyChatCompletionMessage(
+                    user_id=my_chat_completion_message.user_id,
+                    role=my_chat_completion_message.role,
+                    content=my_chat_completion_message.content,
+                    invisible=False,
+                )
+            )
+        )
+        # TODO: Gemini用のMyChatCompletionMessageに詰め込みたい
+        #  https://ai.google.dev/gemini-api/docs/get-started/tutorial?lang=python&hl=ja
+        response = self.post_to_gpt(chat_history)
+        latest_assistant = MyChatCompletionMessage(
+            user_id=my_chat_completion_message.user_id,
+            role="assistant",
+            content=response.text,
+            invisible=False,
+        )
+        chat_history.append(self.save(latest_assistant))
+        return chat_history
+
+    def post_to_gpt(
+        self, chat_history: list[MyChatCompletionMessage]
+    ) -> GenerateContentResponse:
+        generativeai.configure(api_key=os.getenv("GEMINI_API_KEY"))
+        model = generativeai.GenerativeModel("gemini-1.5-flash")
+        # TODO: 「会話」にしたいね
+        response = model.generate_content(chat_history[-1].content)
+        return response
+
+    def save(
+        self, messages: MyChatCompletionMessage | list[MyChatCompletionMessage]
+    ) -> MyChatCompletionMessage | list[MyChatCompletionMessage]:
+        if isinstance(messages, list):
+            self.chatlog_repository.bulk_insert(messages)
+        elif isinstance(messages, MyChatCompletionMessage):
+            self.chatlog_repository.insert(messages)
+        else:
+            raise ValueError(
+                f"Unexpected type {type(messages)}. Expected MyChatCompletionMessage or list[MyChatCompletionMessage]."
+            )
+
+        return messages
 
 
 class OpenAIGptService(LLMService):

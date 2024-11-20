@@ -33,6 +33,15 @@ class HomeView(FormView):
         form_data = form.cleaned_data
         login_user = User.objects.get(pk=1)  # TODO: request.user.id
 
+        # Gemini
+        # llm_service = GeminiService()
+        # my_chat_completion_message = MyChatCompletionMessage(
+        #     user_id=login_user.pk,
+        #     role="user",
+        #     content=form_data["question"],
+        #     invisible=False,
+        # )
+        # llm_service.generate(my_chat_completion_message, gender="man")
 
         # OpenAI
         # Gptに投げるのは role: user のセリフです。Questionは何を入れてもいい
