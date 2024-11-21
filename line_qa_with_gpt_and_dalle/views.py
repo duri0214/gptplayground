@@ -48,6 +48,7 @@ class HomeView(FormView):
             use_case = GeminiUseCase()
             content = form_data["question"]
         elif use_case_type == "OpenAIGpt":
+            # Questionは何を入れてもいい（処理されない）
             use_case = OpenAIGptUseCase()
             content = form_data["question"]
         elif use_case_type == "OpenAIDalle":
@@ -57,6 +58,7 @@ class HomeView(FormView):
             use_case = OpenAITextToSpeechUseCase()
             content = form_data["question"]
         elif use_case_type == "OpenAISpeechToText":
+            # Questionは何を入れてもいい（処理されない）
             use_case = OpenAISpeechToTextUseCase()
             content = None
 

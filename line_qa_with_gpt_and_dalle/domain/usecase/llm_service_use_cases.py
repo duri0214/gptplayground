@@ -25,6 +25,22 @@ class UseCase(ABC):
 
 class GeminiUseCase(UseCase):
     def execute(self, user: User, content: str | None):
+        """
+        GeminiServiceを利用し、ユーザーからの入力（content）を基にテキストを生成します。
+        contentパラメータはNoneではないこと。
+
+        Args:
+            user (User): DjangoのUserモデルのインスタンス
+            content (str | None): ユーザーからの入力テキスト
+
+        Raises:
+            ValueError: contentがNoneの場合
+
+        Returns:
+            テキスト生成の結果
+        """
+        if content is None:
+            raise ValueError("content cannot be None for GeminiUseCase")
         llm_service = GeminiService()
         my_chat_completion_message = MyChatCompletionMessage(
             user=user,
@@ -36,8 +52,23 @@ class GeminiUseCase(UseCase):
 
 
 class OpenAIGptUseCase(UseCase):
-    # Gptに投げるのは role: user のセリフです。Questionは何を入れてもいい
     def execute(self, user: User, content: str | None):
+        """
+        OpenAIGptServiceを利用し、ユーザーからの入力（content）を基にテキストを生成します。
+        contentパラメータはNoneではないこと。
+
+        Args:
+            user (User): DjangoのUserモデルのインスタンス
+            content (str | None): ユーザーからの入力テキスト
+
+        Raises:
+            ValueError: contentがNoneの場合
+
+        Returns:
+            テキスト生成の結果
+        """
+        if content is None:
+            raise ValueError("content cannot be None for OpenAIGptUseCase")
         llm_service = OpenAIGptService()
         my_chat_completion_message = MyChatCompletionMessage(
             user=user,
@@ -49,8 +80,23 @@ class OpenAIGptUseCase(UseCase):
 
 
 class OpenAIDalleUseCase(UseCase):
-    # Dalleに投げるのは role: user のセリフです
     def execute(self, user: User, content: str | None):
+        """
+        OpenAIDalleServiceを利用し、ユーザーからの入力テキスト（content）を基に画像を生成します。
+        contentパラメータはNoneではないこと。
+
+        Args:
+            user (User): DjangoのUserモデルのインスタンス
+            content (str | None): ユーザーからの入力テキスト
+
+        Raises:
+            ValueError: contentがNoneの場合
+
+        Returns:
+            画像生成の結果
+        """
+        if content is None:
+            raise ValueError("content cannot be None for OpenAIDalleUseCase")
         llm_service = OpenAIDalleService()
         my_chat_completion_message = MyChatCompletionMessage(
             user=user,
@@ -62,8 +108,23 @@ class OpenAIDalleUseCase(UseCase):
 
 
 class OpenAITextToSpeechUseCase(UseCase):
-    # ttsに投げるのは role: user のセリフです
     def execute(self, user: User, content: str | None):
+        """
+        OpenAITextToSpeechServiceを利用し、ユーザーからの入力テキスト（content）を基に音声を生成します。
+        contentパラメータはNoneではないこと。
+
+        Args:
+            user (User): DjangoのUserモデルのインスタンス
+            content (str | None): ユーザーからの入力テキスト
+
+        Raises:
+            ValueError: contentがNoneの場合
+
+        Returns:
+            音声生成の結果
+        """
+        if content is None:
+            raise ValueError("content cannot be None for OpenAITextToSpeechUseCase")
         llm_service = OpenAITextToSpeechService()
         my_chat_completion_message = MyChatCompletionMessage(
             user=user,
@@ -75,9 +136,24 @@ class OpenAITextToSpeechUseCase(UseCase):
 
 
 class OpenAISpeechToTextUseCase(UseCase):
-    # ttsに投げるのは直近の role: user のセリフです。Questionは何を入れてもいい
-    # TODO: ちょっとファイルが見つけられないバグがある issue7
     def execute(self, user: User, content: str | None):
+        """
+        TODO: ちょっとファイルが見つけられないバグがある issue7
+        OpenAISpeechToTextServiceを利用し、ユーザーの最新の音声ファイルをテキストに変換します。
+        contentパラメータは必ずNoneであること。
+
+        Args:
+            user (User): DjangoのUserモデルのインスタンス
+            content (str | None): この引数は現在利用されていません。
+
+        Raises:
+            ValueError: contentがNoneでない場合
+
+        Returns:
+            音声をテキストに変換した結果
+        """
+        if content is not None:
+            raise ValueError("content must be None for OpenAISpeechToTextUseCase")
         record = ChatLogsWithLine.objects.filter(
             Q(user=user)
             & Q(role="user")
