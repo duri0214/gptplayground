@@ -17,7 +17,7 @@ class ChatLogRepository:
     @staticmethod
     def insert(my_chat_completion_message: MyChatCompletionMessage):
         ChatLogsWithLine.objects.create(
-            user_id=my_chat_completion_message.user_id,
+            user=my_chat_completion_message.user,
             role=my_chat_completion_message.role,
             content=my_chat_completion_message.content,
             file_path=my_chat_completion_message.file_path,
@@ -35,7 +35,7 @@ class ChatLogRepository:
         ChatLogsWithLine.objects.update_or_create(
             id=my_chat_completion_message.id,
             defaults={
-                "user": my_chat_completion_message.user_id,
+                "user": my_chat_completion_message.user,
                 "role": my_chat_completion_message.role,
                 "content": my_chat_completion_message.content,
                 "file_path": my_chat_completion_message.file_path,

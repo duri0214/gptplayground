@@ -8,6 +8,14 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import FormView
 from dotenv import load_dotenv
 
+from line_qa_with_gpt_and_dalle.domain.usecase.llm_service_use_cases import (
+    GeminiUseCase,
+    OpenAIGptUseCase,
+    OpenAIDalleUseCase,
+    OpenAITextToSpeechUseCase,
+    OpenAISpeechToTextUseCase,
+    UseCase,
+)
 from line_qa_with_gpt_and_dalle.forms import UserTextForm
 from line_qa_with_gpt_and_dalle.models import ChatLogsWithLine
 
@@ -33,68 +41,26 @@ class HomeView(FormView):
         form_data = form.cleaned_data
         login_user = User.objects.get(pk=1)  # TODO: request.user.id
 
-        # Gemini
-        # llm_service = GeminiService()
-        # my_chat_completion_message = MyChatCompletionMessage(
-        #     user_id=login_user.pk,
-        #     role="user",
-        #     content=form_data["question"],
-        #     invisible=False,
-        # )
-        # llm_service.generate(my_chat_completion_message, gender="man")
+        use_case_type = "OpenAISpeechToText"  # TODO: ドロップダウンでモードを決める？
+        use_case: UseCase | None = None
+        content: str | None = form_data["question"]
+        if use_case_type == "Gemini":
+            use_case = GeminiUseCase()
+            content = form_data["question"]
+        elif use_case_type == "OpenAIGpt":
+            use_case = OpenAIGptUseCase()
+            content = form_data["question"]
+        elif use_case_type == "OpenAIDalle":
+            use_case = OpenAIDalleUseCase()
+            content = form_data["question"]
+        elif use_case_type == "OpenAITextToSpeech":
+            use_case = OpenAITextToSpeechUseCase()
+            content = form_data["question"]
+        elif use_case_type == "OpenAISpeechToText":
+            use_case = OpenAISpeechToTextUseCase()
+            content = None
 
-        # OpenAI
-        # Gptに投げるのは role: user のセリフです。Questionは何を入れてもいい
-        # llm_service = OpenAIGptService()
-        # my_chat_completion_message = MyChatCompletionMessage(
-        #     user_id=login_user.pk,
-        #     role="user",
-        #     content=form_data["question"],
-        #     invisible=False,
-        # )
-        # llm_service.generate(my_chat_completion_message, gender="man")
-
-        # Dalleに投げるのは role: user のセリフです
-        # llm_service = OpenAIDalleService()
-        # my_chat_completion_message = MyChatCompletionMessage(
-        #     user_id=login_user,
-        #     role="user",
-        #     content=form_data["question"],
-        #     invisible=False,
-        # )
-        # llm_service.generate(my_chat_completion_message)
-
-        # ttsに投げるのは role: user のセリフです
-        # llm_service = OpenAITextToSpeechService()
-        # my_chat_completion_message = MyChatCompletionMessage(
-        #     user_id=login_user,
-        #     role="user",
-        #     content=form_data["question"],
-        #     invisible=False,
-        # )
-        # llm_service.generate(my_chat_completion_message)
-
-        # ttsに投げるのは直近の role: user のセリフです。Questionは何を入れてもいい
-        # record = ChatLogsWithLine.objects.filter(
-        #     Q(user=login_user)
-        #     & Q(role="user")
-        #     & Q(file_path__endswith=".mp3")
-        #     & Q(invisible=False)
-        # ).last()
-        # if record is None:
-        #     raise ObjectDoesNotExist("No audio file registered for the user")
-        # llm_service = OpenAISpeechToTextService()
-        # my_chat_completion_message = MyChatCompletionMessage(
-        #     pk=record.pk,
-        #     user_id=record.user,
-        #     role=record.role,
-        #     content=record.content,
-        #     file_path=str(
-        #         Path(settings.MEDIA_ROOT) / my_chat_completion_message.file_path
-        #     ),  # TODO: ちょっとファイルが見つけられないバグがある issue7
-        #     invisible=record.invisible,
-        # )
-        # llm_service.generate(my_chat_completion_message)
+        use_case.execute(user=login_user, content=content)
 
         return super().form_valid(form)
 

@@ -6,6 +6,7 @@ from pathlib import Path
 
 import requests.exceptions
 from PIL import Image
+from django.contrib.auth.models import User
 from google import generativeai
 from google.generativeai.types import GenerateContentResponse
 from openai import OpenAI
@@ -28,7 +29,7 @@ def get_stored_chat_history(
     history = [
         MyChatCompletionMessage(
             pk=chatlog.pk,
-            user_id=int(chatlog.user_id),
+            user=chatlog.user,
             role=chatlog.role,
             content=chatlog.content,
             invisible=False,
@@ -63,18 +64,16 @@ def get_prompt(gender: Gender) -> str:
     """
 
 
-def create_initial_prompt(
-    user_id: int, gender: Gender
-) -> list[MyChatCompletionMessage]:
+def create_initial_prompt(user: User, gender: Gender) -> list[MyChatCompletionMessage]:
     history = [
         MyChatCompletionMessage(
-            user_id=user_id,
+            user=user,
             role="system",
             content=get_prompt(gender),
             invisible=True,
         ),
         MyChatCompletionMessage(
-            user_id=user_id,
+            user=user,
             role="user",
             content="なぞなぞスタート",
             invisible=False,
@@ -111,13 +110,13 @@ class GeminiService(LLMService):
             raise Exception("content is None")
 
         chat_history = get_stored_chat_history(
-            user_id=my_chat_completion_message.user_id,
+            user_id=my_chat_completion_message.user.pk,
             chatlog_repository=self.chatlog_repository,
         )
         chat_history.append(
             self.save(
                 MyChatCompletionMessage(
-                    user_id=my_chat_completion_message.user_id,
+                    user=my_chat_completion_message.user,
                     role=my_chat_completion_message.role,
                     content=my_chat_completion_message.content,
                     invisible=False,
@@ -128,7 +127,7 @@ class GeminiService(LLMService):
         #  https://ai.google.dev/gemini-api/docs/get-started/tutorial?lang=python&hl=ja
         response = self.post_to_gpt(chat_history)
         latest_assistant = MyChatCompletionMessage(
-            user_id=my_chat_completion_message.user_id,
+            user=my_chat_completion_message.user,
             role="assistant",
             content=response.text,
             invisible=False,
@@ -172,12 +171,12 @@ class OpenAIGptService(LLMService):
             raise Exception("content is None")
 
         chat_history = get_stored_chat_history(
-            user_id=my_chat_completion_message.user_id,
+            user_id=my_chat_completion_message.user.pk,
             chatlog_repository=self.chatlog_repository,
         )
         if not chat_history:
             chat_history = create_initial_prompt(
-                user_id=my_chat_completion_message.user_id, gender=Gender(gender)
+                user=my_chat_completion_message.user, gender=Gender(gender)
             )
             self.save(chat_history)
 
@@ -188,7 +187,7 @@ class OpenAIGptService(LLMService):
             chat_history.append(
                 self.save(
                     MyChatCompletionMessage(
-                        user_id=my_chat_completion_message.user_id,
+                        user=my_chat_completion_message.user,
                         role=my_chat_completion_message.role,
                         content=my_chat_completion_message.content,
                         invisible=False,
@@ -198,7 +197,7 @@ class OpenAIGptService(LLMService):
         response = self.post_to_gpt(chat_history)
 
         latest_assistant = MyChatCompletionMessage(
-            user_id=my_chat_completion_message.user_id,
+            user=my_chat_completion_message.user,
             role=response.choices[0].message.role,
             content=response.choices[0].message.content,
             invisible=False,
@@ -209,7 +208,7 @@ class OpenAIGptService(LLMService):
             chat_history.append(
                 self.save(
                     MyChatCompletionMessage(
-                        user_id=latest_assistant.user_id,
+                        user=latest_assistant.user,
                         role="user",
                         content="評価結果をjsonで出力してください",
                         invisible=True,
@@ -219,7 +218,7 @@ class OpenAIGptService(LLMService):
             response = self.post_to_gpt(chat_history)
 
             latest_assistant = MyChatCompletionMessage(
-                user_id=my_chat_completion_message.user_id,
+                user=my_chat_completion_message.user,
                 role=response.choices[0].message.role,
                 content=response.choices[0].message.content,
                 invisible=True,
