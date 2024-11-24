@@ -27,3 +27,31 @@ python manage.py collectstatic
 python manage.py createsuperuser
 python manage.py runserver
 ```
+
+## geoService
+
+```
+pip install rasterio affine
+```
+
+## google drive
+
+### 前提条件
+
+1. Google Drive APIの有効化
+   Google Cloud ConsoleでGoogle Drive APIを有効にします。
+
+2. 認証情報の設定
+   OAuth2認証を使用するために、認証情報（credentials.json）をダウンロードしてプロジェクトに配置します。
+
+3. 必要なライブラリをインストール
+   必要なライブラリをインストールします。
+   ```
+   pip install google-api-python-client google-auth-httplib2 google-auth-oauthlib
+   ```
+
+### 実行手順
+
+`credentials.json` を準備。
+フォルダID（Google Drive URLのhttps://drive.google.com/drive/folders/<folder_id>部分）を指定。
+スクリプトを実行。
