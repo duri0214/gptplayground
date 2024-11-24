@@ -1,3 +1,4 @@
+from django.contrib.auth.models import User
 from openai.types.chat import (
     ChatCompletionSystemMessageParam,
     ChatCompletionAssistantMessageParam,
@@ -10,7 +11,7 @@ from line_qa_with_gpt_and_dalle.models import ChatLogsWithLine
 class MyChatCompletionMessage:
     def __init__(
         self,
-        user_id: int,
+        user: User,
         role: str,
         invisible: bool,
         pk: int = None,
@@ -18,7 +19,7 @@ class MyChatCompletionMessage:
         file_path: str = None,
     ):
         self.id = pk
-        self.user_id = user_id
+        self.user = user
         self.role = role
         self.content = content
         self.file_path = file_path
@@ -38,7 +39,7 @@ class MyChatCompletionMessage:
 
     def to_entity(self) -> ChatLogsWithLine:
         return ChatLogsWithLine(
-            user_id=self.user_id,
+            user=self.user,
             role=self.role,
             content=self.content,
             invisible=self.invisible,
@@ -47,7 +48,7 @@ class MyChatCompletionMessage:
 
     def __str__(self):
         return (
-            f"user_id: {self.user_id}, "
+            f"user_id: {self.user.pk}, "
             f"role: {self.role}, "
             f"content: {self.content}, "
             f"invisible: {self.invisible}, "

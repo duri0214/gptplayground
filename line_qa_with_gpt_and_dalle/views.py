@@ -1,18 +1,26 @@
 import json
-from pathlib import Path
 
-import environ
 from django.contrib.auth.models import User
 from django.http import HttpResponse
 from django.urls import reverse_lazy
 from django.views import View
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import FormView
-from openai import OpenAI
+from dotenv import load_dotenv
 
-from config.settings import BASE_DIR
+from line_qa_with_gpt_and_dalle.domain.usecase.llm_service_use_cases import (
+    GeminiUseCase,
+    OpenAIGptUseCase,
+    OpenAIDalleUseCase,
+    OpenAITextToSpeechUseCase,
+    OpenAISpeechToTextUseCase,
+    UseCase,
+)
 from line_qa_with_gpt_and_dalle.forms import UserTextForm
 from line_qa_with_gpt_and_dalle.models import ChatLogsWithLine
+
+# .env ファイルを読み込む
+load_dotenv()
 
 
 class HomeView(FormView):
@@ -33,50 +41,28 @@ class HomeView(FormView):
         form_data = form.cleaned_data
         login_user = User.objects.get(pk=1)  # TODO: request.user.id
 
-        env = environ.Env()
-        environ.Env.read_env(Path(BASE_DIR, ".env"))
-        client = OpenAI(api_key=env("OPENAI_API_KEY"))
+        use_case_type = "OpenAISpeechToText"  # TODO: ドロップダウンでモードを決める？
+        use_case: UseCase | None = None
+        content: str | None = form_data["question"]
+        if use_case_type == "Gemini":
+            use_case = GeminiUseCase()
+            content = form_data["question"]
+        elif use_case_type == "OpenAIGpt":
+            # Questionは何を入れてもいい（処理されない）
+            use_case = OpenAIGptUseCase()
+            content = form_data["question"]
+        elif use_case_type == "OpenAIDalle":
+            use_case = OpenAIDalleUseCase()
+            content = form_data["question"]
+        elif use_case_type == "OpenAITextToSpeech":
+            use_case = OpenAITextToSpeechUseCase()
+            content = form_data["question"]
+        elif use_case_type == "OpenAISpeechToText":
+            # Questionは何を入れてもいい（処理されない）
+            use_case = OpenAISpeechToTextUseCase()
+            content = None
 
-        # TODO: gpt用なのでfile_pathはありません
-        # gpt_service = ModelGptService(client)
-        # my_chat_completion_message = MyChatCompletionMessage(
-        #     user_id=login_user.pk,
-        #     role="user",
-        #     content=form_data["question"],
-        #     invisible=False,
-        # )
-        # gpt_service.generate(my_chat_completion_message, gender="man")
-
-        # TODO: 絵にするのはassistantが回答する前の「role: userのセリフ」です
-        #  ただし、gpt_serviceの中で呼べば難しくはなさそう
-        # dalle_service = ModelDalleService(client)
-        # my_chat_completion_message = MyChatCompletionMessage(
-        #     user_id=login_user,
-        #     role="user",
-        #     content=form_data["question"],
-        #     invisible=False,
-        # )
-        # dalle_service.generate(my_chat_completion_message)
-
-        # TODO: tts用なのでfile_pathはありません
-        # tts_service = ModelTextToSpeechService(client)
-        # my_chat_completion_message = MyChatCompletionMessage(
-        #     user_id=login_user,
-        #     role="user",
-        #     content=form_data["question"],
-        #     invisible=False,
-        # )
-        # tts_service.generate(my_chat_completion_message)
-
-        # TODO: stt用なのでcontentはありません
-        # stt_service = ModelSpeechToTextService(client)
-        # my_chat_completion_message = MyChatCompletionMessage(
-        #     user_id=login_user,
-        #     role="user",
-        #     file_path="audios/53f86c30db.mp3",
-        #     invisible=False,
-        # )
-        # stt_service.generate(my_chat_completion_message)
+        use_case.execute(user=login_user, content=content)
 
         return super().form_valid(form)
 
