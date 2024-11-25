@@ -1,10 +1,15 @@
-import os
-
+import matplotlib.pyplot as plt
 import numpy as np
 import rasterio
+from matplotlib.patches import Rectangle
 from rasterio.windows import Window
 
-from retrieval_qa_with_source.domain.valueobject.geo import MetaData, GoogleMapCoords
+from retrieval_qa_with_source.domain.valueobject.geo import (
+    MetaData,
+    GoogleMapCoords,
+    RectangleCoords,
+    Point,
+)
 
 
 class GeoService:
@@ -56,6 +61,28 @@ class GeoService:
                 transform, center_y, center_x, offset="center"
             )
             return GoogleMapCoords(latitude=lat, longitude=lon)
+
+    @staticmethod
+    def get_pixel_coordinates_from_geo(
+        file_path: str, coords: GoogleMapCoords
+    ) -> tuple[int, int]:
+        """
+        緯度経度からピクセル座標に変換する。
+
+        Args:
+            file_path (str): GeoTIFFファイルのパス。
+            coords (GoogleMapCoords): 緯度経度のデータ。
+
+        Returns:
+            tuple[int, int]: ピクセル座標 (x, y)。
+        """
+        with rasterio.open(file_path) as dataset:
+            transform = dataset.transform
+
+            # 緯度経度をピクセル座標に変換
+            col, row = ~transform * (coords.longitude, coords.latitude)  # 逆変換
+
+            return int(col), int(row)
 
     @staticmethod
     def get_pixel_coordinates(
@@ -136,57 +163,64 @@ class GeoService:
             return src.read(1, window=window)
 
     @staticmethod
-    def rescale_and_save(file_path: str, brightness_factor: float = 1.0) -> None:
+    def draw_bbox_on_cropped_image(
+        full_image_data: np.ndarray,
+        rectangle_coords: RectangleCoords,
+        output_path: str,
+    ):
         """
-        GeoTIFFファイルのデータを0～255にリスケールし、明るさを調整して保存する。
-        保存時のファイル名は元ファイル名に '_rescaled' を付加する。
+        全体画像に赤枠を描画し、保存する関数
 
         Args:
-            file_path (str): 入力GeoTIFFファイルのパス。
-            brightness_factor (float): 明るさ調整係数（1.0でそのまま、値が大きいほど明るくなる）。
+            full_image_data (np.ndarray): 元の全体画像データ
+            rectangle_coords (RectangleCoords): 赤枠を描く矩形の座標範囲
+            output_path (str): 保存先の画像パス
+        """
+        fig, ax = plt.subplots(figsize=(10, 10))
+        ax.imshow(full_image_data, cmap="gray")  # グレースケール画像の表示
+
+        # 赤枠を描画する
+        rect = Rectangle(
+            (rectangle_coords.min_point.x, rectangle_coords.min_point.y),  # 左下の座標
+            rectangle_coords.width,  # 幅
+            rectangle_coords.height,  # 高さ
+            linewidth=2,
+            edgecolor="red",
+            facecolor="none",
+        )
+        ax.add_patch(rect)
+
+        # 軸を非表示
+        ax.axis("off")
+
+        # 画像を保存
+        plt.savefig(output_path, bbox_inches="tight", pad_inches=0)
+        plt.close()
+
+        print(f"Image with bounding box saved to: {output_path}")
+
+    @staticmethod
+    def rescale_cropped_data_and_save(cropped_data: np.ndarray, output_path: str):
+        """
+        切り取ったデータをリスケールし、保存する。
+
+        Args:
+            cropped_data (np.ndarray): 切り取った画像データ。
+            output_path (str): 保存先の画像パス。
         """
 
-        def rescale_data(data: np.ndarray, scale_factor: float) -> np.ndarray:
-            """
-            内部メソッド: データを0～255にリスケールし、明るさを調整する。
-
-            Args:
-                data (np.ndarray): 入力データ。
-                scale_factor (float): 明るさ調整係数。
-
-            Returns:
-                np.ndarray: リスケールされたデータ。
-            """
-            data_min, data_max = np.percentile(
-                data, [2, 98]
-            )  # 上下2%をクリップしてリスケール
-            rescaled = (data - data_min) / (data_max - data_min) * 255 * scale_factor
-            rescaled = np.clip(rescaled, 0, 255)  # 値を0～255に制限
+        def rescale_data(data: np.ndarray) -> np.ndarray:
+            data_min, data_max = np.percentile(data, [2, 98])
+            rescaled = (data - data_min) / (data_max - data_min) * 255
+            rescaled = np.clip(rescaled, 0, 255)
             return rescaled.astype(np.uint8)
 
-        # 出力ファイル名を生成
-        base_name, ext = os.path.splitext(file_path)
-        output_path = f"{base_name}_rescaled{ext}"
-
-        with rasterio.open(file_path) as dataset:
-            # データの読み込み
-            rescaled_data = rescale_data(
-                data=dataset.read(1), scale_factor=brightness_factor
-            )
-
-            # メタデータの更新
-            meta = dataset.meta.copy()
-            meta.update(
-                dtype="uint8", photometric="MINISBLACK"
-            )  # グレースケール設定を追加
-
-            # リスケール後のデータを新しいファイルに保存
-            with rasterio.open(output_path, "w", **meta) as dst:
-                dst.write(rescaled_data, 1)
-
-        print(
-            f"Rescaled GeoTIFF file saved as {output_path} with grayscale adjustment."
-        )
+        rescaled_data = rescale_data(cropped_data)
+        plt.imshow(rescaled_data, cmap="gray")
+        plt.axis("off")
+        plt.savefig(output_path, bbox_inches="tight", pad_inches=0)
+        plt.close()
+        print(f"Rescaled cropped image saved to: {output_path}")
 
 
 # サンプル利用
@@ -223,12 +257,34 @@ if __name__ == "__main__":
         GoogleMapCoords(latitude=37.389831, longitude=136.902589),  # 左下（西南）
         GoogleMapCoords(latitude=37.391049, longitude=136.904030),  # 右上（北東）
     ]
-    cropped_data = geo_service.crop_by_bbox(
+    w_cropped_data = geo_service.crop_by_bbox(
         file_path=target_file_path,
         min_coords=target_coords[0],
         max_coords=target_coords[1],
     )
-    print("Cropped Data Shape:", cropped_data.shape)
+    print("Cropped Data Shape:", w_cropped_data.shape)
 
-    # 真っ黒写真回避｜GeoTIFFファイルのデータをリスケールして保存する
-    geo_service.rescale_and_save(file_path=target_file_path)
+    # リスケールして保存（拡大写真用）
+    cropped_rescaled_path = "image_with_bbox_cropped.png"
+    geo_service.rescale_cropped_data_and_save(w_cropped_data, cropped_rescaled_path)
+
+    # 緯度経度範囲からピクセル位置を計算
+    min_pixel_coords = geo_service.get_pixel_coordinates_from_geo(
+        target_file_path, target_coords[0]
+    )
+    max_pixel_coords = geo_service.get_pixel_coordinates_from_geo(
+        target_file_path, target_coords[1]
+    )
+
+    # 全体写真に赤枠を描画して保存
+    output_image_path = "image_with_bbox_full.png"
+    geo_service.draw_bbox_on_cropped_image(
+        full_image_data=geo_service.read_band_as_array(target_file_path),
+        rectangle_coords=RectangleCoords(
+            min_point=Point(*min_pixel_coords),  # 左下（西南）
+            max_point=Point(*max_pixel_coords),  # 右上（北東）
+        ),
+        output_path=output_image_path,
+    )
+
+    print("Images with bounding boxes have been saved.")
