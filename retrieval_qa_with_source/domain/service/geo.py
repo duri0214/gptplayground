@@ -200,6 +200,26 @@ class GeoService:
         print(f"Image with bounding box saved to: {output_path}")
 
     @staticmethod
+    def calculate_forest_percentage_from_array(
+        data_array: np.ndarray, forest_threshold: float
+    ) -> float:
+        """
+        ndarray 形式のデータから森が占める割合を計算する。
+
+        Args:
+            data_array (np.ndarray): 切り出されたデータの配列。
+            forest_threshold (float): 森と判定するピクセル値の閾値。
+
+        Returns:
+            float: 森が占める割合（0～1）。
+        """
+        # 森と判定されるピクセル数を計算
+        forest_pixels = np.sum(data_array > forest_threshold)
+        total_pixels = data_array.size
+
+        return forest_pixels / total_pixels if total_pixels > 0 else 0
+
+    @staticmethod
     def rescale_cropped_data_and_save(cropped_data: np.ndarray, output_path: str):
         """
         切り取ったデータをリスケールし、保存する。
@@ -271,6 +291,12 @@ if __name__ == "__main__":
         max_coords=location_coords[location][1],
     )
     print("Cropped Data Shape:", w_cropped_data.shape)
+
+    forest_percentage = geo_service.calculate_forest_percentage_from_array(
+        data_array=w_cropped_data,
+        forest_threshold=128,  # 森の閾値（例）
+    )
+    print(f"Forest Percentage: {forest_percentage * 100:.2f}%")
 
     # リスケールして保存（拡大写真用）
     cropped_rescaled_path = "image_with_bbox_cropped.png"
