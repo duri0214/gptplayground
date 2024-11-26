@@ -253,14 +253,22 @@ if __name__ == "__main__":
     print(f"Value at ({target_coords.latitude}, {target_coords.longitude}): {value}")
 
     # 緯度経度範囲を指定して画像を切り取る
-    target_coords = [
-        GoogleMapCoords(latitude=37.389831, longitude=136.902589),  # 左下（西南）
-        GoogleMapCoords(latitude=37.391049, longitude=136.904030),  # 右上（北東）
-    ]
+    location_coords = {
+        "schoolyard": [
+            GoogleMapCoords(latitude=37.389831, longitude=136.902589),  # 左下（西南）
+            GoogleMapCoords(latitude=37.391049, longitude=136.904030),  # 右上（北東）
+        ],
+        "forest": [
+            GoogleMapCoords(latitude=37.388843, longitude=136.903071),  # 左下（西南）
+            GoogleMapCoords(latitude=37.389491, longitude=136.904273),  # 右上（北東）
+        ],
+    }
+
+    location = "schoolyard"
     w_cropped_data = geo_service.crop_by_bbox(
         file_path=target_file_path,
-        min_coords=target_coords[0],
-        max_coords=target_coords[1],
+        min_coords=location_coords[location][0],
+        max_coords=location_coords[location][1],
     )
     print("Cropped Data Shape:", w_cropped_data.shape)
 
@@ -270,10 +278,10 @@ if __name__ == "__main__":
 
     # 緯度経度範囲からピクセル位置を計算
     min_pixel_coords = geo_service.get_pixel_coordinates_from_geo(
-        target_file_path, target_coords[0]
+        target_file_path, location_coords[location][0]
     )
     max_pixel_coords = geo_service.get_pixel_coordinates_from_geo(
-        target_file_path, target_coords[1]
+        target_file_path, location_coords[location][1]
     )
 
     # 全体写真に赤枠を描画して保存
